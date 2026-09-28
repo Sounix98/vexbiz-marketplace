@@ -2,6 +2,33 @@
 
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
+## 1.3.0 · 28/09 · Cambios de la auditoría (pautas web + aspecto premium)
+
+Aplicado sobre el CSS y las pantallas ya hechas. No cambia la decisión B1: el precio sigue en botón oscuro.
+
+**Cómo se ve**
+- **Inicio:** los banners ahora son editoriales, con texto real (antes eran imágenes con el texto incrustado) y una foto del catálogo. Hay un botón de pausa junto a los puntos que detiene el carrusel y la banda de Academia. En tema oscuro la cabecera es neutra (antes se veía marrón).
+- **«Ver todo»:** pasa a ser un enlace de texto con flecha en lugar de una píldora oscura.
+- **Secciones:** títulos más grandes (22 px) y más aire entre secciones.
+- **Tarjetas:** foto 1:1 con margen interno. El stock aparece como una línea de texto solo con 2 unidades o menos o agotado, sin el punto que latía. La ficha conserva la etiqueta de 3 niveles.
+- **Menos ámbar:** los íconos de filas y nichos, el avatar, las iniciales de tiendas y proveedores y el corazón de favoritos pasan a tonos neutros. El aviso del carrito es informativo (azul). En Categorías se quitó «Explorar» de cada fila; queda la flecha.
+- **Marcas:** fichas claras con el nombre en mayúsculas, en lugar de círculos con iniciales.
+- **Ficha:** la foto es cuadrada con margen, y el nombre del producto es el título principal de la pantalla.
+- **Iniciar sesión y Crear cuenta:** la barra lleva el logo de VEXBIZ y el título va solo en la tarjeta (antes se repetía). Los errores aparecen debajo del campo que hay que corregir y dicen cómo arreglarlo.
+- **Carrito:** al quitar un producto, el aviso trae «Deshacer» durante 5 segundos.
+- **Hover:** filas, nichos, tiendas, proveedores, marcas, banners y enlaces responden al pasar el mouse.
+
+**Técnico**
+- `theme-color` para claro y oscuro; precarga de fuentes cuando se sirve por http.
+- «Saltar al contenido» con la tecla Tab.
+- `touch-action: manipulation` y `text-wrap: balance` en títulos.
+- `translate="no"` en marcas y tiendas.
+- Imágenes con `width` y `height`; `fetchpriority` en el primer banner; `content-visibility` en la grilla.
+- Precios con `Intl.NumberFormat` (se lee $8,80).
+- Buscadores con `name` y textos de ejemplo terminados en «…»; «VEXBIZ» bien escrito.
+- Soporte dice «24/7», igual que el Inicio.
+- `acceso-demo.html` actualizado con el mismo logo y los mismos errores por campo.
+
 ## 1.2.0 · 28/09 · Iniciar sesión y Crear cuenta integrados en la app
 
 - Abierta desde la carpeta (doble clic en `index.html`), la app entra en **modo demostración**: Iniciar sesión funciona con respuestas simuladas y nada sale del teléfono. Antes mostraba un aviso de que no podía abrir sesión. Cada formulario lo avisa con un recuadro azul.

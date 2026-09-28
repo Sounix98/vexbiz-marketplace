@@ -3,7 +3,7 @@
    segundo paso con código si la cuenta tiene verificación en dos pasos, y «Crear cuenta gratis».
    Textos de error = los mismos del sitio (auth.message). */
 import { esc } from '../format.js';
-import { ico, topbar, success } from '../ui.js';
+import { ico, topbar, brandbar, success } from '../ui.js';
 import { CONFIG } from '../config.js';
 import { auth } from '../auth.js';
 import { nav } from '../nav.js';
@@ -19,6 +19,20 @@ const demoNote = (kind) => (auth.demo() ? `<div class="msg msg--info" role="note
 const safeNote = () => `<p class="auth__safe">${ico('lock')}<span>${auth.demo() ? 'En la app publicada, la conexión va directo a VEXBIZ y la app no guarda tu contraseña.' : 'La conexión va directo a VEXBIZ. La app no guarda tu contraseña.'}</span></p>`;
 const toRegister = (label) => (auth.demo() ? `<a class="textlink" href="#/registro">${label}</a>` : ext(label, '/register'));
 const toLogin = (label) => `<a class="textlink" href="#/login">${label}</a>`;
+
+/* Error junto al campo (auditoría 28/09): texto bajo la caja, aria-invalid y aria-describedby.
+   fieldError(input, '') lo limpia. Los avisos que no son de un campo siguen arriba del formulario. */
+export function fieldError(input, text) {
+  const fld = input.closest('.fld'); if (!fld) return;
+  const id = input.id + '-err';
+  let p = fld.querySelector('.fld__err');
+  if (!p) { p = document.createElement('p'); p.className = 'fld__err'; p.id = id; fld.querySelector('.fld__box').after(p); }
+  fld.classList.toggle('fld--bad', !!text);
+  p.hidden = !text; p.innerHTML = text ? ico('alert') + `<span>${esc(text)}</span>` : '';
+  const desc = (input.getAttribute('aria-describedby') || '').split(' ').filter((x) => x && x !== id);
+  if (text) { desc.unshift(id); input.setAttribute('aria-invalid', 'true'); } else input.removeAttribute('aria-invalid');
+  if (desc.length) input.setAttribute('aria-describedby', desc.join(' ')); else input.removeAttribute('aria-describedby');
+}
 
 const stepPassword = () => `
   <form novalidate data-form="password">
@@ -46,8 +60,8 @@ export const login = {
   noBar: true,
   render(_p, q) {
     if (auth.signedIn()) return topbar('Iniciar sesión') + `<div class="auth"><div class="msg msg--info">${ico('check-circle')}<span>Ya entraste como ${esc(auth.firstName())}.</span></div></div>`;
-    return topbar('Iniciar sesión') + `<div class="auth"><div class="auth__card">
-        <div class="auth__head"><span class="auth__badge">${ico('shield')}</span><div><h1 data-step-title>Iniciar sesión</h1><p data-step-sub>Ingresa con tu email y contraseña registrados en Venezuela.</p></div></div>
+    return brandbar() + `<div class="auth"><div class="auth__card">
+        <div class="auth__head"><span class="auth__badge">${ico('shield')}</span><div><h1 data-step-title tabindex="-1" data-focus>Iniciar sesión</h1><p data-step-sub>Ingresa con tu email y contraseña registrados en Venezuela.</p></div></div>
         ${demoNote('login')}
         <div data-step>${stepPassword()}</div>
         ${safeNote()}
@@ -82,15 +96,14 @@ export const login = {
         peek.setAttribute('aria-label', on ? 'Ocultar contraseña' : 'Ver contraseña');
         peek.querySelector('use').setAttribute('href', '#i-' + (on ? 'eye-off' : 'eye'));
       });
-      [email, pass].forEach((i) => i.addEventListener('input', () => { i.closest('.fld').classList.remove('fld--bad'); show(form, {}); }));
+      [email, pass].forEach((i) => i.addEventListener('input', () => { fieldError(i, ''); show(form, {}); }));
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         if (btn.dataset.state) return;
         const e = email.value.trim(), p = pass.value;
         const bad = !/^\S+@\S+\.\S+$/.test(e) ? email : !p ? pass : null;
         if (bad) {
-          bad.closest('.fld').classList.add('fld--bad');
-          show(form, { error: bad === email ? 'Escribe el correo con el que te registraste.' : 'Escribe tu contraseña.' });
+          fieldError(bad, bad === email ? 'Escribe el correo con el que te registraste, por ejemplo nombre@ejemplo.com.' : 'Escribe tu contraseña.');
           bad.focus(); return;
         }
         busy(btn, true, 'Entrando…'); show(form, {});
@@ -100,8 +113,9 @@ export const login = {
           finish(btn);
         } catch (err) {
           busy(btn, false);
-          const m = auth.message(err); show(form, m);
-          if (m.error && err.code === 'auth.invalid_credentials') { pass.value = ''; pass.focus(); }
+          const m = auth.message(err);
+          if (err.code === 'auth.invalid_credentials') { pass.value = ''; fieldError(pass, m.error + ' Revísalos o usa «¿Olvidaste tu contraseña?».'); pass.focus(); }
+          else show(form, m);
         }
       });
       setTimeout(() => email.focus({ preventScroll: true }), 60);
@@ -112,16 +126,21 @@ export const login = {
       el.querySelector('[data-step-sub]').textContent = 'Escribe el código de tu app de autenticación para terminar de entrar.';
       host.innerHTML = stepCode();
       const form = host.querySelector('form'), code = form.elements.code, btn = form.querySelector('[data-submit]');
-      code.addEventListener('input', () => { code.closest('.fld').classList.remove('fld--bad'); show(form, {}); });
+      code.addEventListener('input', () => { fieldError(code, ''); show(form, {}); });
       form.querySelector('[data-restart]').addEventListener('click', toPassword);
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         if (btn.dataset.state) return;
         const c = code.value.trim();
-        if (!c) { code.closest('.fld').classList.add('fld--bad'); show(form, { error: 'Escribe el código.' }); code.focus(); return; }
+        if (!c) { fieldError(code, 'Escribe el código de 6 dígitos de tu app de autenticación.'); code.focus(); return; }
         busy(btn, true, 'Comprobando código…'); show(form, {});
         try { await auth.verify(ticket, c); finish(btn); }
-        catch (err) { busy(btn, false); code.value = ''; code.focus(); show(form, { error: err.status === 0 ? 'No hay conexión. Comprueba tu red e inténtalo otra vez.' : err.detail || 'Ese código no es válido.' }); }
+        catch (err) {
+          busy(btn, false); code.value = '';
+          if (err.status === 0) show(form, { error: 'No hay conexión. Comprueba tu red e inténtalo otra vez.' });
+          else fieldError(code, (err.detail || 'Ese código no es válido.') + ' Escribe el código que aparece ahora en tu app.');
+          code.focus();
+        }
       });
       setTimeout(() => code.focus({ preventScroll: true }), 60);
     }
@@ -161,13 +180,13 @@ export const registro = {
     const it = INTENT[(q && q.quiero) in INTENT ? q.quiero : 'buy'];
     const key = Object.keys(INTENT).find((k) => INTENT[k] === it);
     if (!auth.demo()) {
-      return topbar('Crear cuenta') + `<div class="auth"><div class="auth__card">
-        <div class="auth__head"><span class="auth__badge">${ico('user')}</span><div><h1>Crear cuenta</h1><p>${esc(it.sub)}</p></div></div>
+      return brandbar() + `<div class="auth"><div class="auth__card">
+        <div class="auth__head"><span class="auth__badge">${ico('user')}</span><div><h1 tabindex="-1" data-focus>Crear cuenta</h1><p>${esc(it.sub)}</p></div></div>
         ${ext('<span class="vx-btn__label">Crear mi cuenta en ve.vexbiz.com</span>', '/register', 'vx-btn vx-btn--primary vx-btn--block vx-btn--lg')}
         </div><p class="auth__alt">¿Ya tienes una cuenta registrada? ${toLogin('Iniciar sesión')}</p></div>`;
     }
-    return topbar('Crear cuenta') + `<div class="auth" data-reg><div class="auth__card">
-      <div class="auth__head"><span class="auth__badge">${ico('user')}</span><div><h1>Crear cuenta</h1><p data-intent-sub>${esc(it.sub)}</p></div></div>
+    return brandbar() + `<div class="auth" data-reg><div class="auth__card">
+      <div class="auth__head"><span class="auth__badge">${ico('user')}</span><div><h1 tabindex="-1" data-focus>Crear cuenta</h1><p data-intent-sub>${esc(it.sub)}</p></div></div>
       ${demoNote('register')}
       <form novalidate data-form="register">
         <div class="msg msg--danger" role="alert" data-error hidden></div>
@@ -193,10 +212,10 @@ export const registro = {
     if (!form) return;
     const f = form.elements, err = form.querySelector('[data-error]'), btn = form.querySelector('[data-submit]');
     const show = (t) => { err.hidden = !t; err.innerHTML = t ? ico('alert') + `<span>${esc(t)}</span>` : ''; };
-    const mark = (i, bad) => { const b = i.closest('.fld'); if (b) b.classList.toggle('fld--bad', !!bad); };
+    const mark = (i, text) => fieldError(i, text || '');
     form.addEventListener('input', (e) => {
       if (e.target.name === 'password') form.querySelector('[data-rules]').innerHTML = rulesHtml(e.target.value);
-      if (e.target.name !== 'intent') { mark(e.target, false); show(''); }
+      if (e.target.name !== 'intent') { mark(e.target, ''); show(''); }
     });
     form.addEventListener('change', (e) => { if (e.target.name === 'intent') el.querySelector('[data-intent-sub]').textContent = INTENT[e.target.value].sub; });
     const peek = form.querySelector('[data-peek]');
@@ -213,10 +232,11 @@ export const registro = {
         [f.name, !f.name.value.trim(), 'Escribe tu nombre.'],
         [f.last, !f.last.value.trim(), 'Escribe tu apellido.'],
         [f.email, !/^\S+@\S+\.\S+$/.test(f.email.value.trim()), 'Escribe un correo válido, por ejemplo tunombre@empresa.com.'],
-        [f.password, !RULES.every(([, t]) => t(f.password.value)), 'La contraseña todavía no cumple los tres requisitos.'],
+        [f.password, !RULES.every(([, t]) => t(f.password.value)), 'La contraseña todavía no cumple los tres requisitos de abajo.'],
       ];
       const bad = checks.find((c) => c[1]);
-      if (bad) { mark(bad[0], true); show(bad[2]); bad[0].focus(); return; }
+      checks.forEach((c) => mark(c[0], ''));
+      if (bad) { mark(bad[0], bad[2]); bad[0].focus(); return; }
       const label = btn.querySelector('.vx-btn__label'), idle = label.textContent;
       btn.dataset.state = 'sending'; btn.setAttribute('aria-busy', 'true'); label.textContent = 'Creando cuenta…'; show('');
       try {
@@ -230,8 +250,8 @@ export const registro = {
         const h = el.querySelector('[data-focus]'); if (h) h.focus({ preventScroll: true });
       } catch (x) {
         btn.removeAttribute('data-state'); btn.removeAttribute('aria-busy'); label.textContent = idle;
-        show(x.detail || (x.status === 0 ? 'No hay conexión. Comprueba tu red e inténtalo otra vez.' : 'No pudimos crear la cuenta. Inténtalo otra vez.'));
-        if (x.code === 'auth.email_taken') { mark(f.email, true); f.email.focus(); }
+        if (x.code === 'auth.email_taken') { mark(f.email, x.detail); f.email.focus(); }
+        else show(x.detail || (x.status === 0 ? 'No hay conexión. Comprueba tu red e inténtalo otra vez.' : 'No pudimos crear la cuenta. Inténtalo otra vez.'));
       }
     });
   },

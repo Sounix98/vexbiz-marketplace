@@ -56,9 +56,18 @@
   var esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   var fold = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   var plural = (n, one, many) => `${n.toLocaleString(CONFIG.locale)} ${n === 1 ? one : many}`;
+  var moneyFmt = {};
   function money(n, currency = CONFIG.currency) {
-    const v = Number(n || 0).toLocaleString(CONFIG.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return currency === "USD" ? `$ ${v}` : `${currency === "VES" ? "Bs." : currency} ${v}`;
+    const c = String(currency || "USD").toUpperCase();
+    let f = moneyFmt[c];
+    if (!f) {
+      try {
+        f = moneyFmt[c] = new Intl.NumberFormat(CONFIG.locale, { style: "currency", currency: c, currencyDisplay: "narrowSymbol" });
+      } catch (e) {
+        f = moneyFmt[c] = new Intl.NumberFormat(CONFIG.locale, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol" });
+      }
+    }
+    return f.formatToParts(Number(n || 0)).map((p) => p.type === "currency" && c === "VES" ? "Bs. " : p.value).join("");
   }
   function shortDate(iso) {
     try {
@@ -331,8 +340,16 @@
       emit("cart");
     },
     remove(id) {
+      const l = state.cart[id];
       delete state.cart[id];
       emit("cart");
+      return l;
+    },
+    restore(line) {
+      if (line && line.id) {
+        state.cart[line.id] = line;
+        emit("cart");
+      }
     },
     clear() {
       state.cart = {};
@@ -413,8 +430,15 @@
   }
   var canBuy = (p) => p.price > 0 && !(p.availability === "out_of_stock" || Number(p.stock || 0) <= 0 && p.availability !== "in_stock");
   var priceLabel = (p) => p.price > 0 ? money(p.price, p.currency) : "Precio a consultar";
-  function img(src, alt = "", attrs = "") {
-    return src ? `<img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" ${attrs} data-fallback>` : "";
+  function img(src, alt = "", attrs = "", size = 240) {
+    const eager = /fetchpriority/.test(attrs);
+    return src ? `<img src="${esc(src)}" alt="${esc(alt)}" width="${size}" height="${size}"${eager ? "" : ' loading="lazy"'} decoding="async" referrerpolicy="no-referrer" ${attrs} data-fallback>` : "";
+  }
+  function stockLine(p) {
+    const n = Number(p.stock || 0);
+    if (p.availability === "out_of_stock" || n <= 0 && p.availability !== "in_stock") return '<span class="pcard__stock pcard__stock--out">Agotado</span>';
+    if (n > 0 && n <= 2) return `<span class="pcard__stock">${n === 1 ? "Última unidad" : "Últimas 2"}</span>`;
+    return "";
   }
   function favBtn(p, cls) {
     const on = favs.has(p.id);
@@ -425,9 +449,9 @@
     <a class="pcard__link" href="#/p/${esc(p.id)}">
       <span class="pcard__media">${p.images && p.images[0] ? img(p.images[0], "") : `<span class="pcard__noimg">${ico("image")}</span>`}</span>
       <span class="pcard__body"><span class="pcard__name">${esc(p.name)}</span>
-        <span class="pcard__sku">${esc(p.brand || p.category || "")}</span>${stock(p)}</span>
+        <span class="pcard__sku"${p.brand ? ' translate="no"' : ""}>${esc(p.brand || p.category || "")}</span>${stockLine(p)}</span>
       <span class="pcard__foot"><span class="pcard-price${p.price > 0 ? "" : " pcard-price--ask"}">${priceLabel(p)}</span>
-        <span class="pcard__store">${ico("shield")}<span>${esc(storeName(p))}</span></span></span>
+        <span class="pcard__store">${ico("shield")}<span translate="no">${esc(storeName(p))}</span></span></span>
     </a></article>`;
   }
   function storeLogo(s, cls = "store-card__logo") {
@@ -436,20 +460,22 @@
   function provCard(s, cover) {
     const bg = cover ? ` style="background-image:url(${esc(cover)})"` : "";
     return `<a class="prov reveal" href="#/s/${esc(s.id)}"${bg}>
-    ${cover ? `<span class="sr">${esc(s.name)}</span>` : (s.logo ? `<span class="prov__logo">${img(s.logo, "")}</span>` : `<span class="prov__mono" aria-hidden="true">${esc(initials(s.name))}</span>`) + ico("check-circle", "prov__check") + `<span class="prov__name">${esc(s.name)}</span>`}
+    ${cover ? `<span class="sr">${esc(s.name)}</span>` : (s.logo ? `<span class="prov__logo">${img(s.logo, "")}</span>` : `<span class="prov__mono" aria-hidden="true">${esc(initials(s.name))}</span>`) + ico("check-circle", "prov__check") + `<span class="prov__name" translate="no">${esc(s.name)}</span>`}
     <span class="prov__chip">${esc(s.niche || "Tienda verificada")}</span>
     <span class="prov__count">${plural(s.count, "producto", "productos")}</span></a>`;
   }
   function storeCard(s, extraMeta = "") {
     return `<a class="store-card reveal" href="#/s/${esc(s.id)}">${storeLogo(s)}
-    <span class="store-card__body"><span class="store-card__name">${esc(s.name)}</span>
+    <span class="store-card__body"><span class="store-card__name" translate="no">${esc(s.name)}</span>
       <span class="store-card__meta">${[extraMeta, s.niche, s.city, plural(s.count, "producto", "productos")].filter(Boolean).map(esc).join(" · ")}</span>
       ${s.verified ? `<span class="vx-status vx-status--info">${ico("shield")}Tienda verificada</span>` : ""}</span>
     ${ico("chev-r")}</a>`;
   }
   var empty = (art, title, text, action = "") => `<div class="empty"><span class="empty__art">${ico(art)}</span><h3>${title}</h3><p>${text}</p>${action}</div>`;
-  var topbar = (title, extra = "") => `<header class="topbar"><button class="iconbtn" type="button" data-back aria-label="Volver">${ico("chev-l")}</button>
-   <h1 class="topbar__title" tabindex="-1" data-focus>${title}</h1>${extra}</header>`;
+  var topbar = (title, extra = "", tag = "h1") => `<header class="topbar"><button class="iconbtn" type="button" data-back aria-label="Volver">${ico("chev-l")}</button>
+   ${tag === "h1" ? `<h1 class="topbar__title" tabindex="-1" data-focus>${title}</h1>` : `<p class="topbar__title">${title}</p>`}${extra}</header>`;
+  var brandbar = () => `<header class="topbar"><button class="iconbtn" type="button" data-back aria-label="Volver">${ico("chev-l")}</button>
+   <span class="topbar__brand"><img class="brandmark--on-light" src="assets/img/logo-claro.webp" width="92" height="36" alt="VEXBIZ"><img class="brandmark--on-dark" src="assets/img/logo-oscuro.webp" width="92" height="36" alt="VEXBIZ"></span></header>`;
   var rootHead = (title, sub = "", crumb = "") => `<header class="page-head" style="padding-top:var(--vx-sp-5)">${crumb ? `<span class="page-head__crumb">${crumb}</span>` : ""}
    <h1 class="page-head__title" tabindex="-1" data-focus>${title}</h1>${sub ? `<p class="page-head__sub">${sub}</p>` : ""}</header>`;
   var skeletonGrid = (n = 4) => `<div class="grid">${Array.from({ length: n }, () => '<div class="skel skel-card"></div>').join("")}</div>`;
@@ -472,12 +498,20 @@
     }, 1200);
   }
   var toastT;
-  function toast(msg) {
+  function toast(msg, opts = {}) {
     const el = document.querySelector("[data-toast-out]");
-    el.textContent = msg;
+    el.classList.toggle("has-action", !!opts.action);
+    if (opts.action) {
+      el.innerHTML = `<span>${esc(msg)}</span><button class="toast__act" type="button">${esc(opts.action)}</button>`;
+      el.querySelector("button").addEventListener("click", () => {
+        clearTimeout(toastT);
+        el.classList.remove("is-on", "has-action");
+        if (opts.onAction) opts.onAction();
+      }, { once: true });
+    } else el.textContent = msg;
     el.classList.add("is-on");
     clearTimeout(toastT);
-    toastT = setTimeout(() => el.classList.remove("is-on"), 2800);
+    toastT = setTimeout(() => el.classList.remove("is-on", "has-action"), opts.action ? 5e3 : 2800);
   }
   var io;
   function reveal(root) {
@@ -1012,11 +1046,18 @@
       const map = new Map(niches.map((n) => [n.id, n]));
       const tabs = ["todo", ...CONFIG.homeNiches.filter((id) => map.has(id))];
       const trust = (home.trust || []).slice(0, 4);
+      const pickIds = ["ref", "fer", "aut"].map((k) => (home.bestSellers[k] || [])[0]).filter(Boolean);
+      const feats = pickIds.length ? await api.byIds(pickIds) : [];
+      const art = (i, icon) => {
+        const p = feats[i], src = p && p.images && p.images[0];
+        return `<span class="banner__art" aria-hidden="true">${src ? img(src, "", i === 0 ? 'fetchpriority="high"' : "", 200) : ico(icon)}</span>`;
+      };
+      const banner = (tag, attrs, cls, kicker, title, sub, cta, artHtml) => `<${tag} class="banner${cls}" ${attrs}><span class="banner__copy"><span class="banner__kicker">${kicker}</span><span class="banner__title">${title}</span><span class="banner__sub">${sub}</span><span class="banner__cta">${cta}${ico("chev-r")}</span></span>${artHtml}</${tag}>`;
       return `<div class="home">
       <header class="hero">
         <div class="hero__bar">
           ${auth.signedIn() ? `<a class="avatar avatar--in" href="#/cuenta" aria-label="Hola, ${esc(auth.firstName())} · Mi cuenta">${esc(initials((auth.user() || {}).full_name || auth.firstName()))}</a>` : `<a class="avatar" href="${auth.available() ? "#/login?next=%23%2Finicio" : "#/cuenta"}" aria-label="${auth.available() ? "Iniciar sesión" : "Mi cuenta"}">${ico("user")}</a>`}
-          <a class="searchfield" href="#/buscar">${ico("search")}<span>Buscar en Vexbiz</span></a>
+          <a class="searchfield" href="#/buscar">${ico("search")}<span>Buscar en <span translate="no">VEXBIZ</span>…</span></a>
           <a class="iconbtn" href="#/pedidos" aria-label="Mis pedidos">${ico("bell")}</a>
         </div>
         ${auth.signedIn() ? `<p class="hero__hello">Hola, <b>${esc(auth.firstName())}</b></p>` : ""}<h1 class="sr" tabindex="-1" data-focus>Inicio</h1>
@@ -1025,22 +1066,22 @@
           ${tabs.map((id) => `<button class="niche" role="tab" type="button" data-niche="${id}" aria-selected="${selected === id}" tabindex="${selected === id ? 0 : -1}">${id === "todo" ? "Todo" : esc(map.get(id).name)}</button>`).join("")}
         </div>
         <section class="banners" aria-roledescription="carrusel" aria-label="Promociones">
-          <div class="banners__track" data-banners tabindex="0">
-            <a class="banner" href="#/categorias"><img src="assets/img/banner-1.webp" width="404" height="132" alt="Encuentra todo en un solo lugar. Miles de productos, repuestos y suministros al mejor precio con garantía oficial."></a>
-            <button class="banner" type="button" data-toast="Técnicos certificados: instalación, mantenimiento y reparación"><img src="assets/img/banner-2.webp" width="404" height="132" alt="Técnicos certificados listos para ayudarte." loading="lazy"></button>
-            <button class="banner" type="button" data-toast="Vender en VEXBIZ: registro de proveedor"><img src="assets/img/banner-3.webp" width="404" height="132" alt="Vende tus suministros y expande tu negocio. Cobros protegidos con Escrow." loading="lazy"></button>
+          <div class="banners__track" data-banners tabindex="0" aria-label="Promociones, desliza para ver más">
+            ${banner("a", 'href="#/categorias"', "", "Marketplace", "Todo para tu negocio en un solo lugar", "Repuestos, equipos y suministros de tiendas verificadas.", "Explorar categorías", art(0, "grid"))}
+            ${banner("button", 'type="button" data-toast="Técnicos certificados: instalación, mantenimiento y reparación"', "", "Servicios", "Técnicos certificados cerca de ti", "Instalación, mantenimiento y reparación con homologación verificada.", "Conocer técnicos", art(1, "tools"))}
+            ${banner("button", 'type="button" data-toast="Vender en VEXBIZ: registro de proveedor en ve.vexbiz.com"', " banner--ink", "Para proveedores", 'Vende en <span translate="no">VEXBIZ</span>', "Sin cuota de entrada: pagas una comisión solo sobre lo que vendes.", "Publicar mi catálogo", art(2, "store"))}
           </div>
-          <div class="dots" data-dots>${[1, 2, 3].map((n) => `<button class="dot" type="button" aria-label="Promoción ${n} de 3"${n === 1 ? ' aria-current="true"' : ""}></button>`).join("")}</div>
+          <div class="dots" data-dots>${[1, 2, 3].map((n) => `<button class="dot" type="button" aria-label="Promoción ${n} de 3"${n === 1 ? ' aria-current="true"' : ""}></button>`).join("")}${reduce ? "" : `<button class="dots__pause" type="button" data-pause aria-pressed="false" aria-label="Pausar el movimiento de las promociones">${ico("pause")}</button>`}</div>
         </section>
       </header>
       <div class="band-ticker" data-ticker>
         <button class="band" type="button" data-toast="${esc(home.academy && home.academy.title || "Academia VEXBIZ")}"><span class="band__title">Academia</span><img class="band__logo" src="assets/img/logo-oscuro.webp" width="46" height="18" alt="VEXBIZ"><span class="band__text">Aprende con nosotros y descubre más</span>${ico("chev-r")}</button>
         <button class="band band--alt" type="button" aria-hidden="true" tabindex="-1" data-toast="Técnicos certificados con homologación verificada"><span class="band__title">Técnicos certificados</span><img class="band__logo" src="assets/img/logo-claro.webp" width="46" height="18" alt="VEXBIZ"><span class="band__text">Homologación verificada</span>${ico("chev-r")}</button>
       </div>
-      <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas">Ver todo</a></div><div class="rail" data-providers></div></section>
-      <section class="sec" aria-labelledby="t-exp"><div class="sec__head"><h2 class="sec__title" id="t-exp">Explora por interés</h2><a class="seeall" href="#/n/todo" data-seeall>Ver todo</a></div><div class="rail" data-products></div></section>
+      <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas">Ver todo${ico("chev-r")}</a></div><div class="rail" data-providers></div></section>
+      <section class="sec" aria-labelledby="t-exp"><div class="sec__head"><h2 class="sec__title" id="t-exp">Explora por interés</h2><a class="seeall" href="#/n/todo" data-seeall>Ver todo${ico("chev-r")}</a></div><div class="rail" data-products></div></section>
       ${home.brands && home.brands.length ? `<section class="sec" aria-labelledby="t-brands"><div class="sec__head"><h2 class="sec__title" id="t-brands">Marcas en VEXBIZ</h2></div>
-        <div class="rail">${home.brands.slice(0, 10).map((b) => `<a class="brand-chip reveal" href="#/buscar?q=${encodeURIComponent(b.name)}"><span class="brand-chip__mark" aria-hidden="true">${esc(b.name.slice(0, 2).toUpperCase())}</span><span class="brand-chip__name">${esc(b.name)}</span><span class="brand-chip__count">${plural(b.products, "producto", "productos")}</span></a>`).join("")}</div></section>` : ""}
+        <div class="rail">${home.brands.slice(0, 10).map((b) => `<a class="brand-chip reveal" href="#/buscar?q=${encodeURIComponent(b.name)}"><span class="brand-chip__name" translate="no">${esc(b.name)}</span><span class="brand-chip__count">${plural(b.products, "producto", "productos")}</span></a>`).join("")}</div></section>` : ""}
       ${trust.length ? `<section class="sec" aria-label="Por qué comprar en VEXBIZ"><div class="trust-strip">${trust.map((t) => `<div class="trust-item">${ico(TRUST_ICON[t.icon] || "check-circle")}<span><b>${esc(t.title)}</b><span>${esc(t.detail)}</span></span></div>`).join("")}</div></section>` : ""}
     </div>`;
     },
@@ -1100,9 +1141,10 @@
         goB(k);
         restart();
       }));
+      let paused = false;
       const restart = () => {
         clearInterval(auto);
-        if (!reduce) auto = setInterval(() => {
+        if (!reduce && !paused) auto = setInterval(() => {
           if (!track.contains(document.activeElement) && document.visibilityState === "visible") goB(cur + 1);
         }, 4500);
       };
@@ -1110,7 +1152,16 @@
       restart();
       const bands = el.querySelectorAll("[data-ticker] .band");
       let bi = 0;
+      const ticker = el.querySelector("[data-ticker]");
+      let hold = false;
+      ["pointerenter", "focusin"].forEach((ev) => ticker.addEventListener(ev, () => {
+        hold = true;
+      }));
+      ["pointerleave", "focusout"].forEach((ev) => ticker.addEventListener(ev, () => {
+        hold = false;
+      }));
       const tick = reduce ? null : setInterval(() => {
+        if (paused || hold) return;
         bi = (bi + 1) % bands.length;
         bands.forEach((b, k) => {
           const on = k === bi;
@@ -1118,6 +1169,14 @@
           b.tabIndex = on ? 0 : -1;
         });
       }, 4e3);
+      const pb = el.querySelector("[data-pause]");
+      if (pb) pb.addEventListener("click", () => {
+        paused = !paused;
+        pb.setAttribute("aria-pressed", String(paused));
+        pb.setAttribute("aria-label", paused ? "Reanudar el movimiento de las promociones" : "Pausar el movimiento de las promociones");
+        pb.querySelector("use").setAttribute("href", "#i-" + (paused ? "play" : "pause"));
+        restart();
+      });
       ctx.onCleanup(() => {
         clearInterval(auto);
         clearInterval(tick);
@@ -1142,11 +1201,11 @@
       const others = moreStore.items.filter((x) => x.id !== p.id).slice(0, 10);
       const attrs = [["Marca", p.brand], ["Modelo", p.model], ["Categoría", p.category], ["Referencia", p.sku], ...p.attrs || []].filter(([, v]) => v && String(v).trim());
       const max = Math.max(1, Math.min(p.stock || 1, 99)), buy = canBuy(p);
-      return topbar(`<span class="sr">Ficha de </span>${esc(niche ? niche.name : "Producto")}`, favBtn(p, "iconbtn")) + `<div class="gallery" aria-label="Fotos del producto">${imgs.map((u, i) => `<div class="pd-media">${u ? img(u, i ? "" : p.name) : `<span class="pcard__noimg">${ico("image")}</span>`}</div>`).join("")}</div>
+      return topbar(esc(niche ? niche.name : "Producto"), favBtn(p, "iconbtn"), "p") + `<div class="gallery" aria-label="Fotos del producto">${imgs.map((u, i) => `<div class="pd-media">${u ? img(u, i ? "" : p.name) : `<span class="pcard__noimg">${ico("image")}</span>`}</div>`).join("")}</div>
       <div class="pd">
         <div class="pd__badges">${stock(p, true)}${p.condition === "new" ? '<span class="vx-status vx-status--neutral">Nuevo</span>' : ""}</div>
-        ${p.brand ? `<span class="pd__brand">${esc(p.brand)}</span>` : ""}
-        <h2 class="pd__name">${esc(p.name)}</h2>
+        ${p.brand ? `<span class="pd__brand" translate="no">${esc(p.brand)}</span>` : ""}
+        <h1 class="pd__name" tabindex="-1" data-focus>${esc(p.name)}</h1>
         <div class="pd__price${p.price > 0 ? "" : " pd__price--ask"}">${priceLabel(p)}<small>${p.price > 0 ? "Precio en dólares (USD), con IVA. El envío se confirma con la tienda." : "La tienda publicó este producto sin precio. Pregúntale antes de comprar."}</small></div>
         ${p.stock > 0 && p.stock <= 5 ? `<p class="pd__note">${p.stock === 1 ? "Queda 1 unidad" : `Quedan ${p.stock} unidades`} en ${esc(s.name)}.</p>` : ""}
         ${storeCard(s, p.city ? "Despacha desde " + p.city : "")}
@@ -1165,7 +1224,7 @@
         <dl class="specs">${attrs.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl></section>` : ""}
       ${p.desc && p.desc.toLowerCase() !== p.raw.toLowerCase() ? `<section class="sec sec--pd" aria-labelledby="t-desc"><div class="sec__head"><h2 class="sec__title" id="t-desc">Descripción</h2></div><p class="desc">${esc(p.desc)}</p></section>` : ""}
       ${(p.compat || []).length ? `<section class="sec sec--pd" aria-labelledby="t-comp"><div class="sec__head"><h2 class="sec__title" id="t-comp">Compatible con</h2></div><div class="chips">${p.compat.map((c) => `<span class="chip">${esc(typeof c === "string" ? c : c.name || JSON.stringify(c))}</span>`).join("")}</div></section>` : ""}
-      ${others.length ? `<section class="sec sec--pd" aria-labelledby="t-more"><div class="sec__head"><h2 class="sec__title" id="t-more">Más de ${esc(s.name)}</h2><a class="seeall" href="#/s/${esc(s.id)}">Ver todo</a></div><div class="rail">${others.map(pcard).join("")}</div></section>` : ""}
+      ${others.length ? `<section class="sec sec--pd" aria-labelledby="t-more"><div class="sec__head"><h2 class="sec__title" id="t-more">Más de ${esc(s.name)}</h2><a class="seeall" href="#/s/${esc(s.id)}">Ver todo${ico("chev-r")}</a></div><div class="rail">${others.map(pcard).join("")}</div></section>` : ""}
       ${related.length ? `<section class="sec sec--pd" aria-labelledby="t-rel"><div class="sec__head"><h2 class="sec__title" id="t-rel">También en ${esc(p.category)}</h2></div><div class="rail">${related.map(pcard).join("")}</div></section>` : ""}
       <div class="actionbar">
         ${buy ? `<div class="step" data-step data-max="${max}"><button type="button" data-dec aria-label="Quitar uno" disabled>${ico("minus", "ico--sm")}</button><output aria-live="polite" aria-label="Cantidad">1</output><button type="button" data-inc aria-label="Agregar uno"${max <= 1 ? " disabled" : ""}>${ico("plus", "ico--sm")}</button></div>
@@ -1236,11 +1295,11 @@
     title: () => "Categorías",
     async render() {
       const niches = (await api.niches()).slice().sort((a, b) => (b.count > 0) - (a.count > 0) || a.name.localeCompare(b.name, "es"));
-      return rootHead("Explora por nichos", `${niches.length} nichos · proveedores homologados por VEXBIZ`, "Inicio / Categorías") + `<div style="padding:0 var(--app-gutter) var(--vx-sp-4)"><label class="searchfield">${ico("search")}<span class="sr">Filtrar nichos</span><input id="niche-filter" type="search" placeholder="Filtrar nichos" data-filter autocomplete="off"></label></div>
+      return rootHead("Explora por nichos", `${niches.length} nichos · proveedores homologados por VEXBIZ`, "Inicio / Categorías") + `<div style="padding:0 var(--app-gutter) var(--vx-sp-4)"><label class="searchfield">${ico("search")}<span class="sr">Filtrar nichos</span><input id="niche-filter" name="nicho" type="search" placeholder="Filtrar nichos…" data-filter autocomplete="off"></label></div>
       <div class="list" data-niche-list>${niches.map((n) => `<a class="niche-row" href="#/n/${esc(n.id)}" data-name="${esc(fold(n.name))}">
         <span class="niche-row__ico niche-row__ico--img">${n.image ? img(n.image, "") : ico("grid")}</span>
         <span class="niche-row__body"><span class="niche-row__name">${esc(n.name)}</span><span class="niche-row__meta">${n.count > 0 ? plural(n.count, "producto", "productos") : "Todavía sin catálogo"}</span></span>
-        <span class="niche-row__go">Explorar${ico("chev-r")}</span></a>`).join("")}</div>
+        <span class="niche-row__go" aria-hidden="true">${ico("chev-r")}</span></a>`).join("")}</div>
       <p class="sec__meta" data-none hidden style="padding-top:12px">Ningún nicho coincide con ese nombre.</p>`;
     },
     mount(el) {
@@ -1310,7 +1369,7 @@
       if (!s) return topbar("Tienda") + empty("store", "No encontramos esta tienda", "Puede que haya cambiado de nombre o ya no venda en VEXBIZ.", link("Ver tiendas", "#/tiendas"));
       const first = await api.search({ store: id, cursor: 0 });
       const hero = `<div class="store-hero"><div class="store-hero__cover store-hero__cover--mono" aria-hidden="true">${storeLogo(s, "store-card__logo store-card__logo--lg")}</div>
-      <div class="store-hero__body"><h2 class="store-hero__name">${esc(s.name)}</h2>
+      <div class="store-hero__body"><h2 class="store-hero__name" translate="no">${esc(s.name)}</h2>
       <span class="store-hero__meta">${[s.niche, [s.city, s.state].filter(Boolean).join(", "), plural(s.count, "producto", "productos")].filter(Boolean).map(esc).join(" · ")}</span>
       ${s.verified ? `<span class="vx-status">${ico("shield")}Tienda verificada</span>` : ""}</div></div>`;
       if (!first.total) return topbar(esc(s.name)) + hero + empty("box", "Su catálogo se está sumando a la app", `${esc(s.name)} está cargando sus productos.`, btn("Avísame cuando haya", "vx-btn--secondary", "data-notify"));
@@ -1336,8 +1395,8 @@
     noBar: true,
     render(_p, q) {
       return `<header class="topbar"><button class="iconbtn" type="button" data-back aria-label="Volver">${ico("chev-l")}</button>
-      <form class="searchfield" role="search" data-search style="margin-right:8px">${ico("search")}<label class="sr" for="q">Buscar en Vexbiz</label>
-      <input id="q" type="search" placeholder="Producto, marca, código o tienda" autocomplete="off" enterkeyhint="search" value="${esc(q.q || "")}" data-focus>
+      <form class="searchfield" role="search" data-search style="margin-right:8px">${ico("search")}<label class="sr" for="q">Buscar en VEXBIZ</label>
+      <input id="q" name="q" type="search" placeholder="Producto, marca, código o tienda…" autocomplete="off" enterkeyhint="search" value="${esc(q.q || "")}" data-focus>
       <button class="iconbtn" type="button" data-clear ${q.q ? "" : "hidden"} aria-label="Borrar búsqueda">${ico("x", "ico--xs")}</button></form></header>
       <div data-results></div>`;
     },
@@ -1439,8 +1498,11 @@
         const line = e.target.closest("[data-line]"), b = e.target.closest("[data-inc],[data-dec]"), rm = e.target.closest("[data-remove]");
         if (line && b) cart.set(line.dataset.line, cart.qty(line.dataset.line) + (b.hasAttribute("data-inc") ? 1 : -1));
         else if (rm) {
-          cart.remove(rm.dataset.remove);
-          toast("Quitado del carrito");
+          const gone = cart.remove(rm.dataset.remove);
+          toast("Quitado del carrito", { action: "Deshacer", onAction: () => {
+            cart.restore(gone);
+            ctx.rerender();
+          } });
         } else return;
         ctx.rerender();
       });
@@ -1593,7 +1655,7 @@
       <p class="label" style="padding:20px var(--app-gutter) 8px">VEXBIZ</p><div class="list">
         ${row("", "book", "Academia VEXBIZ", "Cursos y certificaciones", "", ' data-toast="Academia VEXBIZ: cursos para técnicos y comercios"')}
         ${row("", "store", "Vender en VEXBIZ", "Publica tu catálogo", "", ' data-toast="Vender en VEXBIZ: registro de proveedor en ve.vexbiz.com"')}
-        ${row("", "help", "Soporte", "Ayuda y reclamos", "", ' data-toast="Soporte: respondemos en menos de 2 horas hábiles"')}
+        ${row("", "help", "Soporte", "Ayuda y reclamos", "", ' data-toast="Soporte 24/7: ayuda con pedidos, pagos y reclamos"')}
         ${auth.demo() ? row("acceso-demo.html", "lock", "Estados de acceso", "Demo: todos los estados de Iniciar sesión y Crear cuenta") : ""}
       </div>
       <p class="label" style="padding:20px var(--app-gutter) 8px">Catálogo</p><div class="list">
@@ -1618,7 +1680,9 @@
         } catch (e) {
         }
         t.setAttribute("aria-checked", String(next === "dark"));
-        document.querySelector('meta[name="theme-color"]').content = next === "dark" ? "#1E262A" : "#FFD85E";
+        document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
+          m.content = next === "dark" ? "#1E262A" : "#FFD85E";
+        });
       });
       const ib = el.querySelector("[data-install]");
       if (ib) ib.addEventListener("click", async () => {
@@ -1671,6 +1735,28 @@
   var safeNote = () => `<p class="auth__safe">${ico("lock")}<span>${auth.demo() ? "En la app publicada, la conexión va directo a VEXBIZ y la app no guarda tu contraseña." : "La conexión va directo a VEXBIZ. La app no guarda tu contraseña."}</span></p>`;
   var toRegister = (label) => auth.demo() ? `<a class="textlink" href="#/registro">${label}</a>` : ext(label, "/register");
   var toLogin = (label) => `<a class="textlink" href="#/login">${label}</a>`;
+  function fieldError(input, text) {
+    const fld = input.closest(".fld");
+    if (!fld) return;
+    const id = input.id + "-err";
+    let p = fld.querySelector(".fld__err");
+    if (!p) {
+      p = document.createElement("p");
+      p.className = "fld__err";
+      p.id = id;
+      fld.querySelector(".fld__box").after(p);
+    }
+    fld.classList.toggle("fld--bad", !!text);
+    p.hidden = !text;
+    p.innerHTML = text ? ico("alert") + `<span>${esc(text)}</span>` : "";
+    const desc = (input.getAttribute("aria-describedby") || "").split(" ").filter((x) => x && x !== id);
+    if (text) {
+      desc.unshift(id);
+      input.setAttribute("aria-invalid", "true");
+    } else input.removeAttribute("aria-invalid");
+    if (desc.length) input.setAttribute("aria-describedby", desc.join(" "));
+    else input.removeAttribute("aria-describedby");
+  }
   var stepPassword = () => `
   <form novalidate data-form="password">
     <div class="msg msg--danger" role="alert" data-error hidden></div>
@@ -1695,8 +1781,8 @@
     noBar: true,
     render(_p, q) {
       if (auth.signedIn()) return topbar("Iniciar sesión") + `<div class="auth"><div class="msg msg--info">${ico("check-circle")}<span>Ya entraste como ${esc(auth.firstName())}.</span></div></div>`;
-      return topbar("Iniciar sesión") + `<div class="auth"><div class="auth__card">
-        <div class="auth__head"><span class="auth__badge">${ico("shield")}</span><div><h1 data-step-title>Iniciar sesión</h1><p data-step-sub>Ingresa con tu email y contraseña registrados en Venezuela.</p></div></div>
+      return brandbar() + `<div class="auth"><div class="auth__card">
+        <div class="auth__head"><span class="auth__badge">${ico("shield")}</span><div><h1 data-step-title tabindex="-1" data-focus>Iniciar sesión</h1><p data-step-sub>Ingresa con tu email y contraseña registrados en Venezuela.</p></div></div>
         ${demoNote("login")}
         <div data-step>${stepPassword()}</div>
         ${safeNote()}
@@ -1748,7 +1834,7 @@
           peek.querySelector("use").setAttribute("href", "#i-" + (on ? "eye-off" : "eye"));
         });
         [email, pass].forEach((i) => i.addEventListener("input", () => {
-          i.closest(".fld").classList.remove("fld--bad");
+          fieldError(i, "");
           show(form, {});
         }));
         form.addEventListener("submit", async (ev) => {
@@ -1757,8 +1843,7 @@
           const e = email.value.trim(), p = pass.value;
           const bad = !/^\S+@\S+\.\S+$/.test(e) ? email : !p ? pass : null;
           if (bad) {
-            bad.closest(".fld").classList.add("fld--bad");
-            show(form, { error: bad === email ? "Escribe el correo con el que te registraste." : "Escribe tu contraseña." });
+            fieldError(bad, bad === email ? "Escribe el correo con el que te registraste, por ejemplo nombre@ejemplo.com." : "Escribe tu contraseña.");
             bad.focus();
             return;
           }
@@ -1775,11 +1860,11 @@
           } catch (err) {
             busy(btn2, false);
             const m = auth.message(err);
-            show(form, m);
-            if (m.error && err.code === "auth.invalid_credentials") {
+            if (err.code === "auth.invalid_credentials") {
               pass.value = "";
+              fieldError(pass, m.error + " Revísalos o usa «¿Olvidaste tu contraseña?».");
               pass.focus();
-            }
+            } else show(form, m);
           }
         });
         setTimeout(() => email.focus({ preventScroll: true }), 60);
@@ -1790,7 +1875,7 @@
         host2.innerHTML = stepCode();
         const form = host2.querySelector("form"), code = form.elements.code, btn2 = form.querySelector("[data-submit]");
         code.addEventListener("input", () => {
-          code.closest(".fld").classList.remove("fld--bad");
+          fieldError(code, "");
           show(form, {});
         });
         form.querySelector("[data-restart]").addEventListener("click", toPassword);
@@ -1799,8 +1884,7 @@
           if (btn2.dataset.state) return;
           const c = code.value.trim();
           if (!c) {
-            code.closest(".fld").classList.add("fld--bad");
-            show(form, { error: "Escribe el código." });
+            fieldError(code, "Escribe el código de 6 dígitos de tu app de autenticación.");
             code.focus();
             return;
           }
@@ -1812,8 +1896,9 @@
           } catch (err) {
             busy(btn2, false);
             code.value = "";
+            if (err.status === 0) show(form, { error: "No hay conexión. Comprueba tu red e inténtalo otra vez." });
+            else fieldError(code, (err.detail || "Ese código no es válido.") + " Escribe el código que aparece ahora en tu app.");
             code.focus();
-            show(form, { error: err.status === 0 ? "No hay conexión. Comprueba tu red e inténtalo otra vez." : err.detail || "Ese código no es válido." });
           }
         });
         setTimeout(() => code.focus({ preventScroll: true }), 60);
@@ -1850,13 +1935,13 @@
       const it = INTENT[(q && q.quiero) in INTENT ? q.quiero : "buy"];
       const key = Object.keys(INTENT).find((k) => INTENT[k] === it);
       if (!auth.demo()) {
-        return topbar("Crear cuenta") + `<div class="auth"><div class="auth__card">
-        <div class="auth__head"><span class="auth__badge">${ico("user")}</span><div><h1>Crear cuenta</h1><p>${esc(it.sub)}</p></div></div>
+        return brandbar() + `<div class="auth"><div class="auth__card">
+        <div class="auth__head"><span class="auth__badge">${ico("user")}</span><div><h1 tabindex="-1" data-focus>Crear cuenta</h1><p>${esc(it.sub)}</p></div></div>
         ${ext('<span class="vx-btn__label">Crear mi cuenta en ve.vexbiz.com</span>', "/register", "vx-btn vx-btn--primary vx-btn--block vx-btn--lg")}
         </div><p class="auth__alt">¿Ya tienes una cuenta registrada? ${toLogin("Iniciar sesión")}</p></div>`;
       }
-      return topbar("Crear cuenta") + `<div class="auth" data-reg><div class="auth__card">
-      <div class="auth__head"><span class="auth__badge">${ico("user")}</span><div><h1>Crear cuenta</h1><p data-intent-sub>${esc(it.sub)}</p></div></div>
+      return brandbar() + `<div class="auth" data-reg><div class="auth__card">
+      <div class="auth__head"><span class="auth__badge">${ico("user")}</span><div><h1 tabindex="-1" data-focus>Crear cuenta</h1><p data-intent-sub>${esc(it.sub)}</p></div></div>
       ${demoNote("register")}
       <form novalidate data-form="register">
         <div class="msg msg--danger" role="alert" data-error hidden></div>
@@ -1887,14 +1972,11 @@
         err.hidden = !t;
         err.innerHTML = t ? ico("alert") + `<span>${esc(t)}</span>` : "";
       };
-      const mark = (i, bad) => {
-        const b = i.closest(".fld");
-        if (b) b.classList.toggle("fld--bad", !!bad);
-      };
+      const mark = (i, text) => fieldError(i, text || "");
       form.addEventListener("input", (e) => {
         if (e.target.name === "password") form.querySelector("[data-rules]").innerHTML = rulesHtml(e.target.value);
         if (e.target.name !== "intent") {
-          mark(e.target, false);
+          mark(e.target, "");
           show("");
         }
       });
@@ -1916,12 +1998,12 @@
           [f.name, !f.name.value.trim(), "Escribe tu nombre."],
           [f.last, !f.last.value.trim(), "Escribe tu apellido."],
           [f.email, !/^\S+@\S+\.\S+$/.test(f.email.value.trim()), "Escribe un correo válido, por ejemplo tunombre@empresa.com."],
-          [f.password, !RULES.every(([, t]) => t(f.password.value)), "La contraseña todavía no cumple los tres requisitos."]
+          [f.password, !RULES.every(([, t]) => t(f.password.value)), "La contraseña todavía no cumple los tres requisitos de abajo."]
         ];
         const bad = checks.find((c) => c[1]);
+        checks.forEach((c) => mark(c[0], ""));
         if (bad) {
-          mark(bad[0], true);
-          show(bad[2]);
+          mark(bad[0], bad[2]);
           bad[0].focus();
           return;
         }
@@ -1942,11 +2024,10 @@
           btn2.removeAttribute("data-state");
           btn2.removeAttribute("aria-busy");
           label.textContent = idle;
-          show(x.detail || (x.status === 0 ? "No hay conexión. Comprueba tu red e inténtalo otra vez." : "No pudimos crear la cuenta. Inténtalo otra vez."));
           if (x.code === "auth.email_taken") {
-            mark(f.email, true);
+            mark(f.email, x.detail);
             f.email.focus();
-          }
+          } else show(x.detail || (x.status === 0 ? "No hay conexión. Comprueba tu red e inténtalo otra vez." : "No pudimos crear la cuenta. Inténtalo otra vez."));
         }
       });
     }
@@ -1973,6 +2054,14 @@
     if (what === "cart" || what === "reset" || what === "orders") badge(what === "cart");
   });
   document.addEventListener("click", (e) => {
+    if (e.target.closest("[data-skip]")) {
+      const scr = host.firstChild, t2 = scr && (scr.querySelector("[data-focus]") || scr.querySelector("main h1, h1, a, button, input"));
+      if (t2) {
+        if (!t2.hasAttribute("tabindex") && !/^(A|BUTTON|INPUT)$/.test(t2.tagName)) t2.setAttribute("tabindex", "-1");
+        t2.focus();
+      }
+      return;
+    }
     if (e.target.closest("[data-back]")) {
       nav.back();
       return;

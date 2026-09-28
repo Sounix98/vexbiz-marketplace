@@ -47,7 +47,7 @@ export const cuenta = {
       <p class="label" style="padding:20px var(--app-gutter) 8px">VEXBIZ</p><div class="list">
         ${row('', 'book', 'Academia VEXBIZ', 'Cursos y certificaciones', '', ' data-toast="Academia VEXBIZ: cursos para técnicos y comercios"')}
         ${row('', 'store', 'Vender en VEXBIZ', 'Publica tu catálogo', '', ' data-toast="Vender en VEXBIZ: registro de proveedor en ve.vexbiz.com"')}
-        ${row('', 'help', 'Soporte', 'Ayuda y reclamos', '', ' data-toast="Soporte: respondemos en menos de 2 horas hábiles"')}
+        ${row('', 'help', 'Soporte', 'Ayuda y reclamos', '', ' data-toast="Soporte 24/7: ayuda con pedidos, pagos y reclamos"')}
         ${auth.demo() ? row('acceso-demo.html', 'lock', 'Estados de acceso', 'Demo: todos los estados de Iniciar sesión y Crear cuenta') : ''}
       </div>
       <p class="label" style="padding:20px var(--app-gutter) 8px">Catálogo</p><div class="list">
@@ -65,7 +65,7 @@ export const cuenta = {
       document.documentElement.setAttribute('data-theme', next);
       try { localStorage.setItem(CONFIG.themeKey, next); } catch (e) {}
       t.setAttribute('aria-checked', String(next === 'dark'));
-      document.querySelector('meta[name="theme-color"]').content = next === 'dark' ? '#1E262A' : '#FFD85E';
+      document.querySelectorAll('meta[name="theme-color"]').forEach((m) => { m.content = next === 'dark' ? '#1E262A' : '#FFD85E'; });
     });
     const ib = el.querySelector('[data-install]');
     if (ib) ib.addEventListener('click', async () => { const ok = await install.prompt(); if (ok) el.querySelector('[data-install-card]').remove(); });

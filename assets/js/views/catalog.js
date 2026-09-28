@@ -44,11 +44,11 @@ export const categorias = {
   async render() {
     const niches = (await api.niches()).slice().sort((a, b) => (b.count > 0) - (a.count > 0) || a.name.localeCompare(b.name, 'es'));
     return rootHead('Explora por nichos', `${niches.length} nichos · proveedores homologados por VEXBIZ`, 'Inicio / Categorías') +
-      `<div style="padding:0 var(--app-gutter) var(--vx-sp-4)"><label class="searchfield">${ico('search')}<span class="sr">Filtrar nichos</span><input id="niche-filter" type="search" placeholder="Filtrar nichos" data-filter autocomplete="off"></label></div>
+      `<div style="padding:0 var(--app-gutter) var(--vx-sp-4)"><label class="searchfield">${ico('search')}<span class="sr">Filtrar nichos</span><input id="niche-filter" name="nicho" type="search" placeholder="Filtrar nichos…" data-filter autocomplete="off"></label></div>
       <div class="list" data-niche-list>${niches.map((n) => `<a class="niche-row" href="#/n/${esc(n.id)}" data-name="${esc(fold(n.name))}">
         <span class="niche-row__ico niche-row__ico--img">${n.image ? img(n.image, '') : ico('grid')}</span>
         <span class="niche-row__body"><span class="niche-row__name">${esc(n.name)}</span><span class="niche-row__meta">${n.count > 0 ? plural(n.count, 'producto', 'productos') : 'Todavía sin catálogo'}</span></span>
-        <span class="niche-row__go">Explorar${ico('chev-r')}</span></a>`).join('')}</div>
+        <span class="niche-row__go" aria-hidden="true">${ico('chev-r')}</span></a>`).join('')}</div>
       <p class="sec__meta" data-none hidden style="padding-top:12px">Ningún nicho coincide con ese nombre.</p>`;
   },
   mount(el) {
@@ -114,7 +114,7 @@ export const tienda = {
     if (!s) return topbar('Tienda') + empty('store', 'No encontramos esta tienda', 'Puede que haya cambiado de nombre o ya no venda en VEXBIZ.', link('Ver tiendas', '#/tiendas'));
     const first = await api.search({ store: id, cursor: 0 });
     const hero = `<div class="store-hero"><div class="store-hero__cover store-hero__cover--mono" aria-hidden="true">${storeLogo(s, 'store-card__logo store-card__logo--lg')}</div>
-      <div class="store-hero__body"><h2 class="store-hero__name">${esc(s.name)}</h2>
+      <div class="store-hero__body"><h2 class="store-hero__name" translate="no">${esc(s.name)}</h2>
       <span class="store-hero__meta">${[s.niche, [s.city, s.state].filter(Boolean).join(', '), plural(s.count, 'producto', 'productos')].filter(Boolean).map(esc).join(' · ')}</span>
       ${s.verified ? `<span class="vx-status">${ico('shield')}Tienda verificada</span>` : ''}</div></div>`;
     if (!first.total) return topbar(esc(s.name)) + hero + empty('box', 'Su catálogo se está sumando a la app', `${esc(s.name)} está cargando sus productos.`, btn('Avísame cuando haya', 'vx-btn--secondary', 'data-notify'));
@@ -137,8 +137,8 @@ export const buscar = {
   noBar: true,
   render(_p, q) {
     return `<header class="topbar"><button class="iconbtn" type="button" data-back aria-label="Volver">${ico('chev-l')}</button>
-      <form class="searchfield" role="search" data-search style="margin-right:8px">${ico('search')}<label class="sr" for="q">Buscar en Vexbiz</label>
-      <input id="q" type="search" placeholder="Producto, marca, código o tienda" autocomplete="off" enterkeyhint="search" value="${esc(q.q || '')}" data-focus>
+      <form class="searchfield" role="search" data-search style="margin-right:8px">${ico('search')}<label class="sr" for="q">Buscar en VEXBIZ</label>
+      <input id="q" name="q" type="search" placeholder="Producto, marca, código o tienda…" autocomplete="off" enterkeyhint="search" value="${esc(q.q || '')}" data-focus>
       <button class="iconbtn" type="button" data-clear ${q.q ? '' : 'hidden'} aria-label="Borrar búsqueda">${ico('x', 'ico--xs')}</button></form></header>
       <div data-results></div>`;
   },

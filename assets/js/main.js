@@ -31,6 +31,11 @@ subscribe((what) => { if (what === 'cart' || what === 'reset' || what === 'order
 
 /* Delegación global */
 document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-skip]')) {   // salto al contenido: título o primer control de la pantalla actual
+    const scr = host.firstChild, t = scr && (scr.querySelector('[data-focus]') || scr.querySelector('main h1, h1, a, button, input'));
+    if (t) { if (!t.hasAttribute('tabindex') && !/^(A|BUTTON|INPUT)$/.test(t.tagName)) t.setAttribute('tabindex', '-1'); t.focus(); }
+    return;
+  }
   if (e.target.closest('[data-back]')) { nav.back(); return; }
   const tab = e.target.closest('[data-tab]');
   if (tab) { const h = '#/' + tab.dataset.tab; if (location.hash === h) host.firstChild && host.firstChild.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); else nav.go(h); return; }

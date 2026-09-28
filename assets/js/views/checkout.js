@@ -34,7 +34,7 @@ export const carrito = {
     el.addEventListener('click', (e) => {
       const line = e.target.closest('[data-line]'), b = e.target.closest('[data-inc],[data-dec]'), rm = e.target.closest('[data-remove]');
       if (line && b) cart.set(line.dataset.line, cart.qty(line.dataset.line) + (b.hasAttribute('data-inc') ? 1 : -1));
-      else if (rm) { cart.remove(rm.dataset.remove); toast('Quitado del carrito'); }
+      else if (rm) { const gone = cart.remove(rm.dataset.remove); toast('Quitado del carrito', { action: 'Deshacer', onAction: () => { cart.restore(gone); ctx.rerender(); } }); }
       else return;
       ctx.rerender();
     });

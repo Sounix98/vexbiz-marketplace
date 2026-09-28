@@ -24,12 +24,12 @@ export default {
     const attrs = [['Marca', p.brand], ['Modelo', p.model], ['Categoría', p.category], ['Referencia', p.sku], ...(p.attrs || [])].filter(([, v]) => v && String(v).trim());
     const max = Math.max(1, Math.min(p.stock || 1, 99)), buy = canBuy(p);
 
-    return topbar(`<span class="sr">Ficha de </span>${esc(niche ? niche.name : 'Producto')}`, favBtn(p, 'iconbtn')) +
+    return topbar(esc(niche ? niche.name : 'Producto'), favBtn(p, 'iconbtn'), 'p') +
       `<div class="gallery" aria-label="Fotos del producto">${imgs.map((u, i) => `<div class="pd-media">${u ? img(u, i ? '' : p.name) : `<span class="pcard__noimg">${ico('image')}</span>`}</div>`).join('')}</div>
       <div class="pd">
         <div class="pd__badges">${stock(p, true)}${p.condition === 'new' ? '<span class="vx-status vx-status--neutral">Nuevo</span>' : ''}</div>
-        ${p.brand ? `<span class="pd__brand">${esc(p.brand)}</span>` : ''}
-        <h2 class="pd__name">${esc(p.name)}</h2>
+        ${p.brand ? `<span class="pd__brand" translate="no">${esc(p.brand)}</span>` : ''}
+        <h1 class="pd__name" tabindex="-1" data-focus>${esc(p.name)}</h1>
         <div class="pd__price${p.price > 0 ? '' : ' pd__price--ask'}">${priceLabel(p)}<small>${p.price > 0 ? 'Precio en dólares (USD), con IVA. El envío se confirma con la tienda.' : 'La tienda publicó este producto sin precio. Pregúntale antes de comprar.'}</small></div>
         ${p.stock > 0 && p.stock <= 5 ? `<p class="pd__note">${p.stock === 1 ? 'Queda 1 unidad' : `Quedan ${p.stock} unidades`} en ${esc(s.name)}.</p>` : ''}
         ${storeCard(s, p.city ? 'Despacha desde ' + p.city : '')}
@@ -48,7 +48,7 @@ export default {
         <dl class="specs">${attrs.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl></section>` : ''}
       ${p.desc && p.desc.toLowerCase() !== p.raw.toLowerCase() ? `<section class="sec sec--pd" aria-labelledby="t-desc"><div class="sec__head"><h2 class="sec__title" id="t-desc">Descripción</h2></div><p class="desc">${esc(p.desc)}</p></section>` : ''}
       ${(p.compat || []).length ? `<section class="sec sec--pd" aria-labelledby="t-comp"><div class="sec__head"><h2 class="sec__title" id="t-comp">Compatible con</h2></div><div class="chips">${p.compat.map((c) => `<span class="chip">${esc(typeof c === 'string' ? c : c.name || JSON.stringify(c))}</span>`).join('')}</div></section>` : ''}
-      ${others.length ? `<section class="sec sec--pd" aria-labelledby="t-more"><div class="sec__head"><h2 class="sec__title" id="t-more">Más de ${esc(s.name)}</h2><a class="seeall" href="#/s/${esc(s.id)}">Ver todo</a></div><div class="rail">${others.map(pcard).join('')}</div></section>` : ''}
+      ${others.length ? `<section class="sec sec--pd" aria-labelledby="t-more"><div class="sec__head"><h2 class="sec__title" id="t-more">Más de ${esc(s.name)}</h2><a class="seeall" href="#/s/${esc(s.id)}">Ver todo${ico('chev-r')}</a></div><div class="rail">${others.map(pcard).join('')}</div></section>` : ''}
       ${related.length ? `<section class="sec sec--pd" aria-labelledby="t-rel"><div class="sec__head"><h2 class="sec__title" id="t-rel">También en ${esc(p.category)}</h2></div><div class="rail">${related.map(pcard).join('')}</div></section>` : ''}
       <div class="actionbar">
         ${buy ? `<div class="step" data-step data-max="${max}"><button type="button" data-dec aria-label="Quitar uno" disabled>${ico('minus', 'ico--sm')}</button><output aria-live="polite" aria-label="Cantidad">1</output><button type="button" data-inc aria-label="Agregar uno"${max <= 1 ? ' disabled' : ''}>${ico('plus', 'ico--sm')}</button></div>

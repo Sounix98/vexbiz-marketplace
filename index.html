@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="es" data-version="1.2.0">
+<html lang="es" data-version="1.3.0">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>VEXBIZ</title>
 <meta name="description" content="VEXBIZ: repuestos, equipos y suministros de tiendas verificadas en Venezuela. Compra por tienda, paga con Pago móvil o divisas.">
-<meta name="theme-color" content="#FFD85E">
+<meta name="theme-color" content="#FFD85E" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E262A" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,9 +18,12 @@
 <link rel="stylesheet" href="assets/css/fonts.css">
 <link rel="stylesheet" href="assets/css/tokens.css">
 <link rel="stylesheet" href="assets/css/app.css">
-<script>try{var t=localStorage.getItem('vx-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);if(t==='dark')document.querySelector('meta[name=theme-color]').content='#1E262A';}}catch(e){}</script>
+<script>try{var t=localStorage.getItem('vx-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);document.querySelectorAll('meta[name=theme-color]').forEach(function(m){m.content=t==='dark'?'#1E262A':'#FFD85E';});}}catch(e){}
+/* Fuentes críticas: preload solo servida por http (en file:// el navegador lo bloquea) */
+if(location.protocol!=='file:')['host-grotesk-latin-600-normal','host-grotesk-latin-700-normal','inter-latin-400-normal'].forEach(function(f){var l=document.createElement('link');l.rel='preload';l.as='font';l.type='font/woff2';l.crossOrigin='anonymous';l.href='assets/fonts/'+f+'.woff2';document.head.appendChild(l);});</script>
 </head>
 <body>
+<button class="skip" type="button" data-skip>Saltar al contenido</button>
 <!-- Sprite único del proyecto (vexbiz-pantallas/src/parts/_icons.svg) + íconos de la app en el mismo estilo -->
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
 <defs>
@@ -71,6 +75,8 @@
 <symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 5.8A9.5 9.5 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-2.6 3.4M6.3 7.3A16.6 16.6 0 0 0 2.5 12S6 18.5 12 18.5a9 9 0 0 0 4.3-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3.5 3.5 17 17"/></symbol>
 <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-3"/><path d="M10 16.5 5.5 12 10 7.5M5.5 12h10"/></symbol>
 <symbol id="i-dot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6v12M15 6v12"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5.5v13l10-6.5-10-6.5Z"/></symbol>
 <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 6.5 5.5-2 6 2 5.5-2v13l-5.5 2-6-2-5.5 2v-13Z"/><path d="M9 4.5v13M15 6.5v13"/></symbol>
 <symbol id="i-award" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.5"/><path d="m8.5 13.8-1.3 6.4 4.8-2.4 4.8 2.4-1.3-6.4"/></symbol>
 <symbol id="i-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 20.5V5a1.5 1.5 0 0 1 1.5-1.5h7A1.5 1.5 0 0 1 14.5 5v15.5"/><path d="M14.5 10h4a1 1 0 0 1 1 1v9.5M3 20.5h18"/><path d="M8 7.5h3M8 11h3M8 14.5h3"/></symbol>

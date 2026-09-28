@@ -4,7 +4,7 @@
 import { api } from '../api.js';
 import { CONFIG } from '../config.js';
 import { esc, plural, initials } from '../format.js';
-import { ico, pcard, provCard, empty, btn, reveal, reduce, storeOf } from '../ui.js';
+import { ico, img, pcard, provCard, empty, btn, reveal, reduce, storeOf } from '../ui.js';
 import { prefs } from '../store.js';
 import { auth } from '../auth.js';
 
@@ -37,11 +37,20 @@ export default {
     const map = new Map(niches.map((n) => [n.id, n]));
     const tabs = ['todo', ...CONFIG.homeNiches.filter((id) => map.has(id))];
     const trust = (home.trust || []).slice(0, 4);
+    // Fotos reales del catálogo para los banners editoriales (una por banner)
+    const pickIds = ['ref', 'fer', 'aut'].map((k) => (home.bestSellers[k] || [])[0]).filter(Boolean);
+    const feats = pickIds.length ? await api.byIds(pickIds) : [];
+    const art = (i, icon) => {
+      const p = feats[i], src = p && p.images && p.images[0];
+      return `<span class="banner__art" aria-hidden="true">${src ? img(src, '', i === 0 ? 'fetchpriority="high"' : '', 200) : ico(icon)}</span>`;
+    };
+    const banner = (tag, attrs, cls, kicker, title, sub, cta, artHtml) =>
+      `<${tag} class="banner${cls}" ${attrs}><span class="banner__copy"><span class="banner__kicker">${kicker}</span><span class="banner__title">${title}</span><span class="banner__sub">${sub}</span><span class="banner__cta">${cta}${ico('chev-r')}</span></span>${artHtml}</${tag}>`;
     return `<div class="home">
       <header class="hero">
         <div class="hero__bar">
           ${auth.signedIn() ? `<a class="avatar avatar--in" href="#/cuenta" aria-label="Hola, ${esc(auth.firstName())} · Mi cuenta">${esc(initials((auth.user() || {}).full_name || auth.firstName()))}</a>` : `<a class="avatar" href="${auth.available() ? '#/login?next=%23%2Finicio' : '#/cuenta'}" aria-label="${auth.available() ? 'Iniciar sesión' : 'Mi cuenta'}">${ico('user')}</a>`}
-          <a class="searchfield" href="#/buscar">${ico('search')}<span>Buscar en Vexbiz</span></a>
+          <a class="searchfield" href="#/buscar">${ico('search')}<span>Buscar en <span translate="no">VEXBIZ</span>…</span></a>
           <a class="iconbtn" href="#/pedidos" aria-label="Mis pedidos">${ico('bell')}</a>
         </div>
         ${auth.signedIn() ? `<p class="hero__hello">Hola, <b>${esc(auth.firstName())}</b></p>` : ''}<h1 class="sr" tabindex="-1" data-focus>Inicio</h1>
@@ -50,22 +59,22 @@ export default {
           ${tabs.map((id) => `<button class="niche" role="tab" type="button" data-niche="${id}" aria-selected="${selected === id}" tabindex="${selected === id ? 0 : -1}">${id === 'todo' ? 'Todo' : esc(map.get(id).name)}</button>`).join('')}
         </div>
         <section class="banners" aria-roledescription="carrusel" aria-label="Promociones">
-          <div class="banners__track" data-banners tabindex="0">
-            <a class="banner" href="#/categorias"><img src="assets/img/banner-1.webp" width="404" height="132" alt="Encuentra todo en un solo lugar. Miles de productos, repuestos y suministros al mejor precio con garantía oficial."></a>
-            <button class="banner" type="button" data-toast="Técnicos certificados: instalación, mantenimiento y reparación"><img src="assets/img/banner-2.webp" width="404" height="132" alt="Técnicos certificados listos para ayudarte." loading="lazy"></button>
-            <button class="banner" type="button" data-toast="Vender en VEXBIZ: registro de proveedor"><img src="assets/img/banner-3.webp" width="404" height="132" alt="Vende tus suministros y expande tu negocio. Cobros protegidos con Escrow." loading="lazy"></button>
+          <div class="banners__track" data-banners tabindex="0" aria-label="Promociones, desliza para ver más">
+            ${banner('a', 'href="#/categorias"', '', 'Marketplace', 'Todo para tu negocio en un solo lugar', 'Repuestos, equipos y suministros de tiendas verificadas.', 'Explorar categorías', art(0, 'grid'))}
+            ${banner('button', 'type="button" data-toast="Técnicos certificados: instalación, mantenimiento y reparación"', '', 'Servicios', 'Técnicos certificados cerca de ti', 'Instalación, mantenimiento y reparación con homologación verificada.', 'Conocer técnicos', art(1, 'tools'))}
+            ${banner('button', 'type="button" data-toast="Vender en VEXBIZ: registro de proveedor en ve.vexbiz.com"', ' banner--ink', 'Para proveedores', 'Vende en <span translate="no">VEXBIZ</span>', 'Sin cuota de entrada: pagas una comisión solo sobre lo que vendes.', 'Publicar mi catálogo', art(2, 'store'))}
           </div>
-          <div class="dots" data-dots>${[1, 2, 3].map((n) => `<button class="dot" type="button" aria-label="Promoción ${n} de 3"${n === 1 ? ' aria-current="true"' : ''}></button>`).join('')}</div>
+          <div class="dots" data-dots>${[1, 2, 3].map((n) => `<button class="dot" type="button" aria-label="Promoción ${n} de 3"${n === 1 ? ' aria-current="true"' : ''}></button>`).join('')}${reduce ? '' : `<button class="dots__pause" type="button" data-pause aria-pressed="false" aria-label="Pausar el movimiento de las promociones">${ico('pause')}</button>`}</div>
         </section>
       </header>
       <div class="band-ticker" data-ticker>
         <button class="band" type="button" data-toast="${esc((home.academy && home.academy.title) || 'Academia VEXBIZ')}"><span class="band__title">Academia</span><img class="band__logo" src="assets/img/logo-oscuro.webp" width="46" height="18" alt="VEXBIZ"><span class="band__text">Aprende con nosotros y descubre más</span>${ico('chev-r')}</button>
         <button class="band band--alt" type="button" aria-hidden="true" tabindex="-1" data-toast="Técnicos certificados con homologación verificada"><span class="band__title">Técnicos certificados</span><img class="band__logo" src="assets/img/logo-claro.webp" width="46" height="18" alt="VEXBIZ"><span class="band__text">Homologación verificada</span>${ico('chev-r')}</button>
       </div>
-      <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas">Ver todo</a></div><div class="rail" data-providers></div></section>
-      <section class="sec" aria-labelledby="t-exp"><div class="sec__head"><h2 class="sec__title" id="t-exp">Explora por interés</h2><a class="seeall" href="#/n/todo" data-seeall>Ver todo</a></div><div class="rail" data-products></div></section>
+      <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas">Ver todo${ico('chev-r')}</a></div><div class="rail" data-providers></div></section>
+      <section class="sec" aria-labelledby="t-exp"><div class="sec__head"><h2 class="sec__title" id="t-exp">Explora por interés</h2><a class="seeall" href="#/n/todo" data-seeall>Ver todo${ico('chev-r')}</a></div><div class="rail" data-products></div></section>
       ${home.brands && home.brands.length ? `<section class="sec" aria-labelledby="t-brands"><div class="sec__head"><h2 class="sec__title" id="t-brands">Marcas en VEXBIZ</h2></div>
-        <div class="rail">${home.brands.slice(0, 10).map((b) => `<a class="brand-chip reveal" href="#/buscar?q=${encodeURIComponent(b.name)}"><span class="brand-chip__mark" aria-hidden="true">${esc(b.name.slice(0, 2).toUpperCase())}</span><span class="brand-chip__name">${esc(b.name)}</span><span class="brand-chip__count">${plural(b.products, 'producto', 'productos')}</span></a>`).join('')}</div></section>` : ''}
+        <div class="rail">${home.brands.slice(0, 10).map((b) => `<a class="brand-chip reveal" href="#/buscar?q=${encodeURIComponent(b.name)}"><span class="brand-chip__name" translate="no">${esc(b.name)}</span><span class="brand-chip__count">${plural(b.products, 'producto', 'productos')}</span></a>`).join('')}</div></section>` : ''}
       ${trust.length ? `<section class="sec" aria-label="Por qué comprar en VEXBIZ"><div class="trust-strip">${trust.map((t) => `<div class="trust-item">${ico(TRUST_ICON[t.icon] || 'check-circle')}<span><b>${esc(t.title)}</b><span>${esc(t.detail)}</span></span></div>`).join('')}</div></section>` : ''}
     </div>`;
   },
@@ -114,15 +123,30 @@ export default {
       if (dots[i] && (i !== cur || !dots[i].hasAttribute('aria-current'))) { cur = i; dots.forEach((d, k) => (k === i ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current'))); }
     }, { passive: true });
     dots.forEach((d, k) => d.addEventListener('click', () => { goB(k); restart(); }));
-    const restart = () => { clearInterval(auto); if (!reduce) auto = setInterval(() => { if (!track.contains(document.activeElement) && document.visibilityState === 'visible') goB(cur + 1); }, 4500); };
+    let paused = false;
+    const restart = () => { clearInterval(auto); if (!reduce && !paused) auto = setInterval(() => { if (!track.contains(document.activeElement) && document.visibilityState === 'visible') goB(cur + 1); }, 4500); };
     ['pointerdown', 'focusin', 'wheel'].forEach((ev) => track.addEventListener(ev, restart, { passive: true }));
     restart();
     // Banda Academia / Técnicos
     const bands = el.querySelectorAll('[data-ticker] .band'); let bi = 0;
+    const ticker = el.querySelector('[data-ticker]');
+    let hold = false;
+    ['pointerenter', 'focusin'].forEach((ev) => ticker.addEventListener(ev, () => { hold = true; }));
+    ['pointerleave', 'focusout'].forEach((ev) => ticker.addEventListener(ev, () => { hold = false; }));
     const tick = reduce ? null : setInterval(() => {
+      if (paused || hold) return;
       bi = (bi + 1) % bands.length;
       bands.forEach((b, k) => { const on = k === bi; b.setAttribute('aria-hidden', on ? 'false' : 'true'); b.tabIndex = on ? 0 : -1; });
     }, 4000);
+    // Pausa visible para todo lo que se mueve solo (carrusel y banda): WCAG 2.2.2
+    const pb = el.querySelector('[data-pause]');
+    if (pb) pb.addEventListener('click', () => {
+      paused = !paused;
+      pb.setAttribute('aria-pressed', String(paused));
+      pb.setAttribute('aria-label', paused ? 'Reanudar el movimiento de las promociones' : 'Pausar el movimiento de las promociones');
+      pb.querySelector('use').setAttribute('href', '#i-' + (paused ? 'play' : 'pause'));
+      restart();
+    });
     ctx.onCleanup(() => { clearInterval(auto); clearInterval(tick); });
   },
 };

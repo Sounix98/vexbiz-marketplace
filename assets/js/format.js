@@ -9,9 +9,16 @@ export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&a
 export const fold = (s) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 export const plural = (n, one, many) => `${n.toLocaleString(CONFIG.locale)} ${n === 1 ? one : many}`;
 
+const moneyFmt = {};
 export function money(n, currency = CONFIG.currency) {
-  const v = Number(n || 0).toLocaleString(CONFIG.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return currency === 'USD' ? `$ ${v}` : `${currency === 'VES' ? 'Bs.' : currency} ${v}`;
+  const c = String(currency || 'USD').toUpperCase();
+  let f = moneyFmt[c];
+  if (!f) {
+    try { f = moneyFmt[c] = new Intl.NumberFormat(CONFIG.locale, { style: 'currency', currency: c, currencyDisplay: 'narrowSymbol' }); }
+    catch (e) { f = moneyFmt[c] = new Intl.NumberFormat(CONFIG.locale, { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol' }); }
+  }
+  // ICU todavía escribe «Bs.S» para el bolívar; en Venezuela se usa «Bs.»
+  return f.formatToParts(Number(n || 0)).map((p) => (p.type === 'currency' && c === 'VES' ? 'Bs.\u00a0' : p.value)).join('');
 }
 
 export function shortDate(iso) {

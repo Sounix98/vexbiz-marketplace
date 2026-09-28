@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#FFD85E">
+<meta name="theme-color" content="#FFD85E" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E262A" media="(prefers-color-scheme: dark)">
 <title>VEXBIZ · Acceso (demo)</title>
 <link rel="icon" href="assets/icons/favicon-64.png">
 <!-- Copia SOLO PARA VISUALIZACIÓN de Iniciar sesión y Crear cuenta. No se conecta a ninguna API:
@@ -79,6 +80,8 @@
 <symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 5.8A9.5 9.5 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-2.6 3.4M6.3 7.3A16.6 16.6 0 0 0 2.5 12S6 18.5 12 18.5a9 9 0 0 0 4.3-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3.5 3.5 17 17"/></symbol>
 <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-3"/><path d="M10 16.5 5.5 12 10 7.5M5.5 12h10"/></symbol>
 <symbol id="i-dot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6v12M15 6v12"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5.5v13l10-6.5-10-6.5Z"/></symbol>
 <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 6.5 5.5-2 6 2 5.5-2v13l-5.5 2-6-2-5.5 2v-13Z"/><path d="M9 4.5v13M15 6.5v13"/></symbol>
 <symbol id="i-award" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.5"/><path d="m8.5 13.8-1.3 6.4 4.8-2.4 4.8 2.4-1.3-6.4"/></symbol>
 <symbol id="i-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 20.5V5a1.5 1.5 0 0 1 1.5-1.5h7A1.5 1.5 0 0 1 14.5 5v15.5"/><path d="M14.5 10h4a1 1 0 0 1 1 1v9.5M3 20.5h18"/><path d="M8 7.5h3M8 11h3M8 14.5h3"/></symbol>
@@ -160,11 +163,12 @@
     ['num', 'Al menos un número', function (p) { return /\d/.test(p); }]
   ];
 
-  var topbar = function (title) { return '<header class="topbar"><button class="iconbtn" type="button" data-go="login" aria-label="Volver">' + ico('chev-l') + '</button><h1 class="topbar__title" tabindex="-1" data-focus>' + title + '</h1></header>'; };
+  /* Barra con la marca: el título principal va en la tarjeta (auditoría 28/09) */
+  var topbar = function () { return '<header class="topbar"><button class="iconbtn" type="button" data-go="login" aria-label="Volver">' + ico('chev-l') + '</button><span class="topbar__brand"><img class="brandmark--on-light" src="assets/img/logo-claro.webp" width="92" height="36" alt="VEXBIZ"><img class="brandmark--on-dark" src="assets/img/logo-oscuro.webp" width="92" height="36" alt="VEXBIZ"></span></header>'; };
   var msg = function (kind, icon, text, attr) { return '<div class="msg msg--' + kind + '" ' + attr + (text ? '' : ' hidden') + '>' + (text ? ico(icon) + '<span>' + esc(text) + '</span>' : '') + '</div>'; };
   var link = function (label, go) { return '<a class="textlink" href="#" data-go="' + go + '">' + label + '</a>'; };
   var fakeLink = function (label, note) { return '<a class="textlink" href="#" data-toast="' + esc(note) + '">' + label + '</a>'; };
-  var head = function (icon, title, sub) { return '<div class="auth__head"><span class="auth__badge">' + ico(icon) + '</span><div><h1>' + title + '</h1><p>' + sub + '</p></div></div>'; };
+  var head = function (icon, title, sub) { return '<div class="auth__head"><span class="auth__badge">' + ico(icon) + '</span><div><h1 tabindex="-1" data-focus>' + title + '</h1><p>' + sub + '</p></div></div>'; };
   var safe = '<p class="auth__safe">' + ico('lock') + '<span>La conexión va directo a VEXBIZ. La app no guarda tu contraseña.</span></p>';
 
   /* ---------- Pantallas ---------- */
@@ -172,8 +176,8 @@
     o = o || {};
     return topbar('Iniciar sesión') + '<div class="auth"><div class="auth__card">' +
       head('shield', 'Iniciar sesión', 'Ingresa con tu email y contraseña registrados en Venezuela.') +
-      '<form novalidate data-form="login">' +
-        msg('danger', 'alert', o.error, 'role="alert" data-error') + msg('info', 'help', o.notice, 'role="status" data-notice') +
+      '<form novalidate data-form="login"' + (o.bad ? ' data-preset="' + o.bad + '|' + esc(o.error) + '"' : '') + '>' +
+        msg('danger', 'alert', o.bad ? '' : o.error, 'role="alert" data-error') + msg('info', 'help', o.notice, 'role="status" data-notice') +
         '<div class="fld' + (o.bad === 'email' ? ' fld--bad' : '') + '"><label for="lg-email">Correo electrónico</label><div class="fld__box">' + ico('mail') +
           '<input id="lg-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="nombre@ejemplo.com" value="' + esc(o.email || '') + '"></div></div>' +
         '<div class="fld' + (o.bad === 'password' ? ' fld--bad' : '') + '"><div class="fld__top"><label for="lg-pass">Contraseña</label>' + fakeLink('¿Olvidaste tu contraseña?', 'En la app real abre ve.vexbiz.com/recover') + '</div><div class="fld__box">' + ico('lock') +
@@ -186,8 +190,8 @@
     o = o || {};
     return topbar('Iniciar sesión') + '<div class="auth"><div class="auth__card">' +
       head('shield', 'Verificación en dos pasos', 'Escribe el código de tu app de autenticación para terminar de entrar.') +
-      '<form novalidate data-form="twofa">' + msg('danger', 'alert', o.error, 'role="alert" data-error') +
-        '<div class="fld fld__code' + (o.error ? ' fld--bad' : '') + '"><label for="lg-code">Código de verificación</label><div class="fld__box">' + ico('shield') +
+      '<form novalidate data-form="twofa"' + (o.error ? ' data-preset="code|' + esc(o.error) + '"' : '') + '>' + msg('danger', 'alert', '', 'role="alert" data-error') +
+        '<div class="fld fld__code"><label for="lg-code">Código de verificación</label><div class="fld__box">' + ico('shield') +
           '<input id="lg-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="12" autocapitalize="none" spellcheck="false"></div></div>' +
         '<button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="submit" data-submit><span class="vx-btn__label">Validar y entrar</span></button>' +
         '<button class="vx-btn vx-btn--ghost vx-btn--block" type="button" data-go="login"><span class="vx-btn__label">Usar otra cuenta</span></button>' +
@@ -237,11 +241,11 @@
 
   var STATES = {
     'login':          function () { return [login()]; },
-    'login-error':    function () { return [login({ email: user.email, error: 'Correo o contraseña incorrectos.', bad: 'password' })]; },
+    'login-error':    function () { return [login({ email: user.email, error: 'Correo o contraseña incorrectos. Revísalos o usa «¿Olvidaste tu contraseña?».', bad: 'password' })]; },
     'login-locked':   function () { return [login({ email: user.email, notice: 'Bloqueamos la cuenta un rato por demasiados intentos. Prueba de nuevo en unos minutos.' })]; },
     'login-offline':  function () { return [login({ email: user.email, error: 'No hay conexión. Comprueba tu red e inténtalo otra vez.' })]; },
     'twofa':          function () { return [twofa()]; },
-    'twofa-error':    function () { return [twofa({ error: 'Ese código no es válido.' })]; },
+    'twofa-error':    function () { return [twofa({ error: 'Ese código no es válido. Escribe el código que aparece ahora en tu app.' })]; },
     'register':       function () { return [register({ intent: 'buy' })]; },
     'register-seller':function () { return [register({ intent: 'sell' })]; },
     'register-tech':  function () { return [register({ intent: 'tech' })]; },
@@ -265,12 +269,22 @@
   function idle(btn) { var l = btn.querySelector('.vx-btn__label'); btn.removeAttribute('data-state'); btn.removeAttribute('aria-busy'); l.textContent = btn.dataset.idle || l.textContent; }
   function done(btn, next) { var l = btn.querySelector('.vx-btn__label'); btn.removeAttribute('aria-busy'); btn.dataset.state = 'done'; l.innerHTML = ico('check', 'ico--sm') + 'Listo'; setTimeout(function () { show(next, true); }, reduce ? 300 : 1100); }
   function setMsg(form, sel, kind, icon, text) { var m = form.querySelector(sel); if (!m) return; m.hidden = !text; m.innerHTML = text ? ico(icon) + '<span>' + esc(text) + '</span>' : ''; }
-  function mark(input, bad) { var f = input.closest('.fld'); if (f) f.classList.toggle('fld--bad', !!bad); }
+  /* Error junto al campo, igual que la app (fieldError en views/login.js) */
+  function mark(input, text) {
+    var f = input.closest('.fld'); if (!f) return;
+    var id = input.id + '-err', p = f.querySelector('.fld__err');
+    if (!p) { p = document.createElement('p'); p.className = 'fld__err'; p.id = id; f.querySelector('.fld__box').after(p); }
+    f.classList.toggle('fld--bad', !!text); p.hidden = !text; p.innerHTML = text ? ico('alert') + '<span>' + esc(text) + '</span>' : '';
+    var d = (input.getAttribute('aria-describedby') || '').split(' ').filter(function (x) { return x && x !== id; });
+    if (text) { d.unshift(id); input.setAttribute('aria-invalid', 'true'); } else input.removeAttribute('aria-invalid');
+    if (d.length) input.setAttribute('aria-describedby', d.join(' ')); else input.removeAttribute('aria-describedby');
+  }
 
   function bind(state) {
     var form = view.querySelector('form');
     if (!form) return;
-    form.querySelectorAll('input').forEach(function (i) { i.addEventListener('input', function () { mark(i, false); setMsg(form, '[data-error]', 'danger', 'alert', ''); }); });
+    form.querySelectorAll('input').forEach(function (i) { i.addEventListener('input', function () { mark(i, ''); setMsg(form, '[data-error]', 'danger', 'alert', ''); }); });
+    if (form.dataset.preset) { var pr = form.dataset.preset.split('|'), inp = form.elements[pr[0]]; if (inp) mark(inp, pr.slice(1).join('|')); }
 
     if (form.dataset.form === 'login') {
       form.addEventListener('submit', function (ev) {
@@ -278,8 +292,8 @@
         var btn = form.querySelector('[data-submit]'); if (btn.dataset.state) return;
         var e = form.elements.email, p = form.elements.password;
         setMsg(form, '[data-notice]', 'info', 'help', '');
-        if (!/^\S+@\S+\.\S+$/.test(e.value.trim())) { mark(e, true); setMsg(form, '[data-error]', 'danger', 'alert', 'Escribe el correo con el que te registraste.'); e.focus(); return; }
-        if (!p.value) { mark(p, true); setMsg(form, '[data-error]', 'danger', 'alert', 'Escribe tu contraseña.'); p.focus(); return; }
+        if (!/^\S+@\S+\.\S+$/.test(e.value.trim())) { mark(e, 'Escribe el correo con el que te registraste, por ejemplo nombre@ejemplo.com.'); e.focus(); return; }
+        if (!p.value) { mark(p, 'Escribe tu contraseña.'); p.focus(); return; }
         busy(btn, 'Entrando…');
         wait(900).then(function () {
           var v = e.value.toLowerCase();
@@ -297,11 +311,11 @@
         ev.preventDefault();
         var btn = form.querySelector('[data-submit]'); if (btn.dataset.state) return;
         var c = form.elements.code;
-        if (!c.value.trim()) { mark(c, true); setMsg(form, '[data-error]', 'danger', 'alert', 'Escribe el código.'); c.focus(); return; }
+        if (!c.value.trim()) { mark(c, 'Escribe el código de 6 dígitos de tu app de autenticación.'); c.focus(); return; }
         busy(btn, 'Comprobando código…');
         wait(900).then(function () {
           if (c.value.trim() === '123456') { done(btn, 'account'); return; }
-          idle(btn); c.value = ''; mark(c, true); setMsg(form, '[data-error]', 'danger', 'alert', 'Ese código no es válido.'); c.focus();
+          idle(btn); c.value = ''; mark(c, 'Ese código no es válido. Escribe el código que aparece ahora en tu app.'); c.focus();
         });
       });
       setTimeout(function () { form.elements.code.focus({ preventScroll: true }); }, 60);
@@ -320,7 +334,7 @@
         else if (!f.last.value.trim()) { miss = f.last; err = 'Escribe tu apellido.'; }
         else if (!/^\S+@\S+\.\S+$/.test(f.email.value.trim())) { miss = f.email; err = 'Escribe un correo válido, por ejemplo tunombre@empresa.com.'; }
         else if (!RULES.every(function (r) { return r[2](f.password.value); })) { miss = f.password; err = 'La contraseña todavía no cumple los tres requisitos.'; }
-        if (miss) { mark(miss, true); setMsg(form, '[data-error]', 'danger', 'alert', err); miss.focus(); return; }
+        if (miss) { mark(miss, err); miss.focus(); return; }
         user = { first: f.name.value.trim(), last: f.last.value.trim(), email: f.email.value.trim() };
         busy(btn, 'Creando cuenta…');
         wait(1100).then(function () { show('register-done', true); });
@@ -349,7 +363,7 @@
 
   var themeBtn = document.querySelector('[data-theme-btn]');
   function isDark() { var a = document.documentElement.getAttribute('data-theme'); return a ? a === 'dark' : !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches); }
-  function paintTheme() { var d = isDark(); themeBtn.setAttribute('aria-pressed', String(d)); themeBtn.querySelector('span').textContent = d ? 'Claro' : 'Oscuro'; themeBtn.querySelector('use').setAttribute('href', '#i-' + (d ? 'sun' : 'moon')); document.querySelector('meta[name=theme-color]').content = d ? '#1E262A' : '#FFD85E'; }
+  function paintTheme() { var d = isDark(); themeBtn.setAttribute('aria-pressed', String(d)); themeBtn.querySelector('span').textContent = d ? 'Claro' : 'Oscuro'; themeBtn.querySelector('use').setAttribute('href', '#i-' + (d ? 'sun' : 'moon')); document.querySelectorAll('meta[name=theme-color]').forEach(function (m) { m.content = d ? '#1E262A' : '#FFD85E'; }); }
   themeBtn.addEventListener('click', function () { var next = isDark() ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', next); try { localStorage.setItem('vx-theme', next); } catch (e) {} paintTheme(); });
   paintTheme();
 

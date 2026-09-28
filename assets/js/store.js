@@ -33,7 +33,8 @@ export const cart = {
     return next - base.qty;                     // cuántas unidades entraron de verdad
   },
   set(id, qty) { const l = state.cart[id]; if (!l) return; l.qty = Math.max(1, Math.min(l.stock || 1, qty)); emit('cart'); },
-  remove(id) { delete state.cart[id]; emit('cart'); },
+  remove(id) { const l = state.cart[id]; delete state.cart[id]; emit('cart'); return l; },
+  restore(line) { if (line && line.id) { state.cart[line.id] = line; emit('cart'); } },
   clear() { state.cart = {}; emit('cart'); },
   byStore() {
     const g = {};
