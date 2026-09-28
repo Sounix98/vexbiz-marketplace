@@ -556,9 +556,17 @@ fieldset.group { min-width: 0; }
   transition: color var(--vx-dur) var(--vx-ease-standard);
 }
 .tab .ico { width: 22px; height: 22px; transition: transform var(--vx-dur) var(--vx-ease-standard); }
-.tab__label { font-size: var(--vx-fs-xs); font-weight: 600; line-height: 1; white-space: nowrap; }
+/* B2 reabierta (28/09): inactivas solo con ícono (centrado); la activa muestra el nombre debajo.
+   El texto sigue en el DOM con opacidad 0, así el lector de pantalla nombra cada pestaña. */
+.tab__label {
+  font-size: var(--vx-fs-xs); font-weight: 600; line-height: 1; white-space: nowrap;
+  opacity: 0; transform: translateY(6px) scale(0.9);
+  transition: opacity var(--vx-dur) var(--vx-ease-standard), transform var(--vx-dur) var(--vx-ease-standard);
+}
+.tab:not(.tab--on) .ico { transform: translateY(7px); }
 .tab--on { color: var(--vx-n-900); }
 .tab--on .ico { transform: translateY(-1px); }
+.tab--on .tab__label { opacity: 1; transform: none; }
 .tab:not(.tab--on):hover { color: var(--vx-n-0); }
 .tab:focus-visible { outline-color: var(--vx-amber-300); }
 .tab__badge {
@@ -569,6 +577,8 @@ fieldset.group { min-width: 0; }
   background: var(--vx-accent); color: var(--vx-n-900); box-shadow: 0 0 0 2px var(--app-bar);
 }
 .tab--on .tab__badge { background: var(--vx-n-900); color: var(--vx-n-0); box-shadow: 0 0 0 2px var(--vx-accent); }
+.tab__badge { transition: top var(--vx-dur) var(--vx-ease-standard); }
+.tab:not(.tab--on) .tab__badge { top: 9px; }   /* acompaña al ícono, que baja al centro */
 .tab__badge.is-pop { animation: pop var(--vx-dur) var(--vx-ease-bounce); }
 @keyframes pop { 0% { transform: scale(0.4); } 70% { transform: scale(1.18); } 100% { transform: scale(1); } }
 
@@ -803,9 +813,9 @@ a.row, button.row, .niche-row, .opt { transition: background-color var(--vx-dur-
 .home > .topdock { margin-bottom: calc(var(--vx-sp-7) * -1); }
 
 /* A1 · Presionado: la tab y los íconos se hunden un poco (150 ms, curva estándar) */
-.tab:active .ico { transform: scale(0.9); }
+.tab:not(.tab--on):active .ico { transform: translateY(7px) scale(0.9); }
 .tab--on:active .ico { transform: translateY(-1px) scale(0.9); }
-.tab .ico { transition: transform var(--vx-dur-fast) var(--vx-ease-standard); }
+.tab .ico { transition: transform var(--vx-dur) var(--vx-ease-standard); }
 .pcard-price:active { transform: scale(0.96); }
 .pcard-price { transition: background-color var(--vx-dur-fast) var(--vx-ease-standard), transform var(--vx-dur-fast) var(--vx-ease-standard); }
 

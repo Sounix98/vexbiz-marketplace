@@ -5,7 +5,7 @@
    - API en vivo (marketplace-api): primero red, caché si no hay conexión.
    - Cuenta (/auth, /account-api, cualquier pedido con Authorization): nunca pasa por la caché.
    Subir VERSION en cada entrega para que los teléfonos reciban la versión nueva. */
-const VERSION = 'vx-1.6.0';
+const VERSION = 'vx-1.6.1';
 const SHELL = `${VERSION}-shell`, DATA = `${VERSION}-data`, IMG = 'vx-img', API = 'vx-api';
 const PRECACHE = [
   './',

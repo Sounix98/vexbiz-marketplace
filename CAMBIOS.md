@@ -2,6 +2,14 @@
 
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
+## 1.6.1 · 28/09 · Tab bar: nombre solo en la pestaña activa (B2 reabierta)
+
+- Las pestañas inactivas muestran solo el ícono, centrado. La activa muestra el ícono y su nombre debajo, dentro de la píldora ámbar.
+- Las 4 pestañas miden lo mismo.
+- Al cambiar de pestaña, el ícono de la nueva sube y su nombre aparece; en la anterior el nombre se desvanece y el ícono baja al centro (300 ms, curva estándar). El número del carrito acompaña al ícono.
+- Los nombres siguen en la página con opacidad 0, así un lector de pantalla sigue diciendo «Inicio», «Categorías», «Carrito, 1 producto» y «Cuenta».
+- Reemplaza la decisión B2 «etiquetas siempre visibles», que el usuario reabrió el 28/09.
+
 ## 1.6.0 · 28/09 · Todas las tiendas en vivo en el Inicio + nombres de nicho sin cortes
 
 **Carrusel de nichos**
