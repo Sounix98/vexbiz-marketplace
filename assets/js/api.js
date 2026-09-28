@@ -46,7 +46,13 @@ const liveListing = (p) => ({
   niche: p.niche_code || '', images: [p.image].filter(Boolean), price: p.price || 0, currency: p.currency || 'USD', availability: p.availability,
   stock: p.stock ?? (p.availability === 'in_stock' ? 99 : 1), store: p.store_slug, storeName: storeCase(p.store), city: p.city || '', condition: p.condition, offers: [],
 });
-const liveStore = (s) => ({ id: s.slug, name: storeCase(s.name), legal: s.legal_name || '', niche: s.niche || '', city: s.city || '', state: s.state || '', verified: !!s.verified, logo: s.logo || '', count: s.catalog_size || 0 });
+const liveStore = (s) => ({ id: s.slug, name: storeCase(s.name), legal: s.legal_name || '', niche: s.niche || '', niches: s.niche ? [s.niche] : [], city: s.city || '', state: s.state || '', verified: !!s.verified, logo: s.logo || '', count: s.catalog_size || 0 });
+/* La API repite la tienda una vez por cada nicho: se unen en una sola con niches[] */
+function mergeStores(list) {
+  const m = new Map();
+  list.forEach((s) => { const x = m.get(s.id); if (!x) m.set(s.id, s); else if (s.niche && !x.niches.includes(s.niche)) x.niches.push(s.niche); });
+  return [...m.values()];
+}
 
 /* ---------------- Utilidades del snapshot ---------------- */
 function sortList(list, sort) {
@@ -113,7 +119,7 @@ export const api = {
     return same.slice(0, limit);
   },
 
-  stores: () => prefer(async () => (await live('stores')).data.map(liveStore), (c) => c.stores),
+  stores: () => prefer(async () => mergeStores((await live('stores?limit=100')).data.map(liveStore)), (c) => c.stores),
   store: (id) => prefer(async () => liveStore(await live('stores/' + id)), (c) => c.storeMap.get(id) || null),
 
   async home() {

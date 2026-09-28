@@ -10,6 +10,10 @@ export const ico = (id, cls) => `<svg class="ico${cls ? ' ' + cls : ''}" aria-hi
 const stores = new Map();
 export const setStores = (list) => list.forEach((s) => stores.set(s.id, s));
 export const storeOf = (id) => stores.get(id) || null;
+/* Tiendas: varios nichos y catálogo vacío («Catálogo en camino» en vez de «0 productos») */
+export const storeNiches = (s) => ((s.niches && s.niches.length ? s.niches : [s.niche]).filter(Boolean));
+export const storeCount = (s) => (s.count > 0 ? plural(s.count, 'producto', 'productos') : 'Catálogo en camino');
+export const storeOrder = (a, b) => (b.count - a.count) || a.name.localeCompare(b.name, 'es');
 export const storeName = (p) => p.storeName || (stores.get(p.store) || {}).name || 'Tienda';
 
 /* Stock de 3 niveles: Disponible · Últimas N · Agotado (decisión cerrada #11) */
@@ -61,14 +65,14 @@ export function provCard(s, cover) {
   const bg = cover ? ` style="background-image:url(${esc(cover)})"` : '';
   return `<a class="prov reveal" href="#/s/${esc(s.id)}"${bg}>
     ${cover ? `<span class="sr">${esc(s.name)}</span>` : (s.logo ? `<span class="prov__logo">${img(s.logo, '')}</span>` : `<span class="prov__mono" aria-hidden="true">${esc(initials(s.name))}</span>`) + ico('check-circle', 'prov__check') + `<span class="prov__name" translate="no">${esc(s.name)}</span>`}
-    <span class="prov__chip">${esc(s.niche || 'Tienda verificada')}</span>
-    <span class="prov__count">${plural(s.count, 'producto', 'productos')}</span></a>`;
+    <span class="prov__chip">${esc(storeNiches(s)[0] || 'Tienda verificada')}</span>
+    <span class="prov__count${s.count > 0 ? '' : ' prov__count--soon'}">${storeCount(s)}</span></a>`;
 }
 
 export function storeCard(s, extraMeta = '') {
   return `<a class="store-card reveal" href="#/s/${esc(s.id)}">${storeLogo(s)}
     <span class="store-card__body"><span class="store-card__name" translate="no">${esc(s.name)}</span>
-      <span class="store-card__meta">${[extraMeta, s.niche, s.city, plural(s.count, 'producto', 'productos')].filter(Boolean).map(esc).join(' · ')}</span>
+      <span class="store-card__meta">${[extraMeta, storeNiches(s).join(' y '), s.city, storeCount(s)].filter(Boolean).map(esc).join(' · ')}</span>
       ${s.verified ? `<span class="vx-status vx-status--info">${ico('shield')}Tienda verificada</span>` : ''}</span>
     ${ico('chev-r')}</a>`;
 }

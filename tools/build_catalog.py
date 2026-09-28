@@ -101,7 +101,11 @@ def compact_from_raw(s):
 def build(c):
     stores = {}
     for st in c['stores']:
+        if st['slug'] in stores:   # la API repite la tienda una vez por nicho: se unen en niches[]
+            if st.get('niche') and st['niche'] not in stores[st['slug']]['niches']: stores[st['slug']]['niches'].append(st['niche'])
+            continue
         stores[st['slug']] = {'id': st['slug'], 'name': store_case(st['name']), 'legal': st.get('legal_name', ''), 'niche': st.get('niche', ''),
+                              'niches': [st['niche']] if st.get('niche') else [],
                               'city': st.get('city', ''), 'state': st.get('state', ''), 'verified': bool(st.get('verified')),
                               'logo': st.get('logo') or '', 'count': st.get('catalog_size') or 0}
     products = []

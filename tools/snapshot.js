@@ -19,7 +19,7 @@
   snap.niches = (await J('niches')).data;
   snap.nicheDetail = {};
   for (const n of snap.niches.filter((n) => n.products > 0)) snap.nicheDetail[n.code] = await J('niches/' + n.code);
-  snap.stores = (await J('stores')).data;
+  snap.stores = (await J('stores?limit=100')).data;   // sin limit la API devuelve solo 8
   snap.listings = {};
   for (const [code, max] of Object.entries(PAGES)) {
     let cursor = null, all = [];

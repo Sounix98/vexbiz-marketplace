@@ -2,6 +2,25 @@
 
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
+## 1.6.0 · 28/09 · Todas las tiendas en vivo en el Inicio + nombres de nicho sin cortes
+
+**Carrusel de nichos**
+- Cada nicho mide lo que ocupa su nombre, en una sola línea (antes «Telecomunicaciones» y «GPS Trackers» se partían o se montaban sobre el vecino).
+- Entre un nicho y el siguiente hay siempre 12 px. El primero se alinea con el margen de la pantalla.
+
+**Proveedores**
+- El carril «Proveedores certificados» del Inicio muestra ahora las **21 tiendas** que publica ve.vexbiz.com (antes 3).
+  - Orden: primero las que tienen productos (Repuestos Refrihogar, 2.025; Multiservicios Jimenez, 169), luego el resto de la A a la Z.
+  - Las que aún no cargan productos dicen «Catálogo en camino» en lugar de «0 productos».
+- «Ver todas» abre la lista completa, con las 21 en el mismo orden. Cada tienda abre su página; si no tiene catálogo, ofrece «Avísame cuando haya».
+- El filtro de nicho de arriba también filtra las tiendas. Auxilio Vial Guayana Express y Seguros Orinoco Protege aparecen tanto en Automotriz como en Farmacias, como en el sitio.
+
+**Datos**
+- `data/catalog.json` se actualizó con la lista completa de tiendas (copia en `tools/stores-live-2026-09-28.json`).
+  - La captura anterior tenía solo 8 porque la API devuelve 8 si no se le pide más; `tools/snapshot.js` ahora pide `limit=100`.
+  - Las tiendas repetidas por nicho se unen en una sola, también cuando la app lee la API en vivo.
+- Se quitó «Empresa Dora» y su único producto: ya no aparece en el sitio. El catálogo queda en 317 productos.
+
 ## 1.5.1 · 28/09 · Carrusel de nichos sin tarjeta
 
 - Se retiró la tarjeta blanca que contenía el carrusel: los íconos van directo sobre el fondo del Inicio. El primer círculo queda alineado con el margen de la pantalla.

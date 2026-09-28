@@ -4,7 +4,7 @@
 import { api } from '../api.js';
 import { CONFIG } from '../config.js';
 import { esc, plural, initials } from '../format.js';
-import { ico, img, pcard, provCard, empty, btn, reveal, reduce, storeOf } from '../ui.js';
+import { ico, img, pcard, provCard, empty, btn, reveal, reduce, storeOf, storeNiches, storeOrder } from '../ui.js';
 import { prefs } from '../store.js';
 import { auth } from '../auth.js';
 
@@ -74,7 +74,7 @@ export default {
       <nav class="nicherail" aria-label="Nichos de VEXBIZ">
         <div class="nicherail__track">${niches.slice().sort((a, b) => a.name.localeCompare(b.name, 'es')).map((n) => `<a class="nicon reveal" href="#/n/${esc(n.id)}"><span class="nicon__bubble"><img src="assets/img/nichos/${esc(n.id)}.webp" width="96" height="96" alt="" loading="lazy" decoding="async"></span><span class="nicon__name">${esc(n.name)}</span></a>`).join('')}</div>
       </nav>
-      <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas">Ver todo${ico('chev-r')}</a></div><div class="rail" data-providers></div></section>
+      <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas" data-seeall-stores>Ver todas${ico('chev-r')}</a></div><div class="rail" data-providers></div></section>
       <section class="sec" aria-labelledby="t-exp"><div class="sec__head"><h2 class="sec__title" id="t-exp">Explora por interés</h2><a class="seeall" href="#/n/todo" data-seeall>Ver todo${ico('chev-r')}</a></div><div class="rail" data-products></div></section>
       ${home.brands && home.brands.length ? `<section class="sec" aria-labelledby="t-brands"><div class="sec__head"><h2 class="sec__title" id="t-brands">Marcas en VEXBIZ</h2></div>
         <div class="rail">${home.brands.slice(0, 10).map((b) => `<a class="brand-chip reveal" href="#/buscar?q=${encodeURIComponent(b.name)}"><span class="brand-chip__name" translate="no">${esc(b.name)}</span><span class="brand-chip__count">${plural(b.products, 'producto', 'productos')}</span></a>`).join('')}</div></section>` : ''}
@@ -85,12 +85,13 @@ export default {
   async mount(el, _p, _q, ctx) {
     const [niches, home, stores] = await Promise.all([api.niches(), api.home(), api.stores()]);
     const map = new Map(niches.map((n) => [n.id, n]));
-    const certified = stores.filter((s) => s.verified && s.count > 0).sort((a, b) => b.count - a.count);
+    // Todas las tiendas que publica ve.vexbiz.com: primero las que tienen catálogo, luego de la A a la Z
+    const certified = stores.filter((s) => s.verified).sort(storeOrder);
     const cover = (s) => (/refrihogar/i.test(s.name) ? 'assets/img/prov-refrihogar.webp' : '');   // portada del Figma (248:322)
 
     async function rails() {
       const n = map.get(selected);
-      const provs = certified.filter((s) => selected === 'todo' || !n || s.niche === n.name);
+      const provs = certified.filter((s) => selected === 'todo' || !n || storeNiches(s).includes(n.name));
       el.querySelector('[data-providers]').innerHTML = provs.length ? provs.map((s) => provCard(s, cover(s))).join('')
         : `<div style="flex:1;margin-inline:calc(var(--app-gutter) * -1)">${empty('shield', `Sin proveedores certificados en ${esc(n ? n.name : '')}`, 'Estamos homologando tiendas de este nicho.')}</div>`;
       const items = selected === 'todo' || (n && n.count > 0) ? await railProducts(selected, home) : [];

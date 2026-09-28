@@ -840,16 +840,16 @@ a.row, button.row, .niche-row, .opt { transition: background-color var(--vx-dur-
 /* ---------- 20 · Carrusel de nichos con ícono (Inicio, bajo la banda Academia; íconos: ICONOS NICHOS) ---------- */
 .nicherail { margin: 0; }   /* sin tarjeta: los íconos van directo sobre el fondo */
 .nicherail__track {
-  display: flex; gap: 2px;
+  display: flex; gap: var(--vx-sp-3);
   overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; overscroll-behavior-x: contain;
-  padding: var(--vx-sp-1) calc(var(--app-gutter) - 6px) var(--vx-sp-2);   /* aire para la sombra del hover; el primer círculo alinea con el margen */
-  scroll-padding-inline: calc(var(--app-gutter) - 6px);
+  padding: var(--vx-sp-1) var(--app-gutter) var(--vx-sp-2);   /* aire para la sombra del hover */
+  scroll-padding-inline: var(--app-gutter);
 }
 .nicherail__track::-webkit-scrollbar { display: none; }
 .nicon {
-  flex: 0 0 76px; scroll-snap-align: start;
+  flex: 0 0 auto; min-width: 72px; scroll-snap-align: start;   /* el ancho lo da el nombre: una línea y el mismo espacio entre todos */
   display: flex; flex-direction: column; align-items: center; gap: var(--vx-sp-2);
-  padding: var(--vx-sp-1) 2px; border-radius: var(--vx-r-md); text-align: center;
+  padding: var(--vx-sp-1) 0; border-radius: var(--vx-r-md); text-align: center;
 }
 .nicon__bubble {
   width: 64px; height: 64px; flex: none; border-radius: 50%;
@@ -858,10 +858,12 @@ a.row, button.row, .niche-row, .opt { transition: background-color var(--vx-dur-
   transition: transform var(--vx-dur-fast) var(--vx-ease-standard), box-shadow var(--vx-dur-fast) var(--vx-ease-standard), background-color var(--vx-dur-fast) var(--vx-ease-standard);
 }
 .nicon__bubble img { width: 50px; height: 50px; object-fit: contain; transition: transform var(--vx-dur) var(--vx-ease-bounce); }
-.nicon__name { font-size: var(--vx-fs-xs); font-weight: 700; line-height: 1.2; color: var(--vx-text); text-wrap: balance; }
+.nicon__name { font-size: var(--vx-fs-xs); font-weight: 700; line-height: 1.2; color: var(--vx-text); white-space: nowrap; }
 .nicon:active .nicon__bubble { transform: scale(0.94); }
 @media (hover: hover) {
   .nicon:hover .nicon__bubble { box-shadow: var(--vx-shadow-2); }
   .nicon:hover .nicon__bubble img { transform: translateY(-2px) scale(1.06); }
 }
 .nicon:focus-visible { outline-offset: 0; }
+
+.prov__count--soon { color: var(--vx-n-200); font-weight: 500; }

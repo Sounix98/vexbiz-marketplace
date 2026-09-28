@@ -171,7 +171,16 @@
     condition: p.condition,
     offers: []
   });
-  var liveStore = (s) => ({ id: s.slug, name: storeCase(s.name), legal: s.legal_name || "", niche: s.niche || "", city: s.city || "", state: s.state || "", verified: !!s.verified, logo: s.logo || "", count: s.catalog_size || 0 });
+  var liveStore = (s) => ({ id: s.slug, name: storeCase(s.name), legal: s.legal_name || "", niche: s.niche || "", niches: s.niche ? [s.niche] : [], city: s.city || "", state: s.state || "", verified: !!s.verified, logo: s.logo || "", count: s.catalog_size || 0 });
+  function mergeStores(list) {
+    const m = /* @__PURE__ */ new Map();
+    list.forEach((s) => {
+      const x = m.get(s.id);
+      if (!x) m.set(s.id, s);
+      else if (s.niche && !x.niches.includes(s.niche)) x.niches.push(s.niche);
+    });
+    return [...m.values()];
+  }
   function sortList(list, sort) {
     const l = list.slice();
     const priceKey = (p) => p.price > 0 ? p.price : Infinity;
@@ -264,7 +273,7 @@
       const same = (byNiche.get(p.niche) || []).filter((x) => x.id !== p.id && x.category === p.category);
       return same.slice(0, limit);
     },
-    stores: () => prefer(async () => (await live("stores")).data.map(liveStore), (c) => c.stores),
+    stores: () => prefer(async () => mergeStores((await live("stores?limit=100")).data.map(liveStore)), (c) => c.stores),
     store: (id) => prefer(async () => liveStore(await live("stores/" + id)), (c) => c.storeMap.get(id) || null),
     async home() {
       const c = await snapshot();
@@ -421,6 +430,9 @@
   var stores = /* @__PURE__ */ new Map();
   var setStores = (list) => list.forEach((s) => stores.set(s.id, s));
   var storeOf = (id) => stores.get(id) || null;
+  var storeNiches = (s) => (s.niches && s.niches.length ? s.niches : [s.niche]).filter(Boolean);
+  var storeCount = (s) => s.count > 0 ? plural(s.count, "producto", "productos") : "Catálogo en camino";
+  var storeOrder = (a, b) => b.count - a.count || a.name.localeCompare(b.name, "es");
   var storeName = (p) => p.storeName || (stores.get(p.store) || {}).name || "Tienda";
   function stock(p, full) {
     const n = Number(p.stock || 0);
@@ -461,13 +473,13 @@
     const bg = cover ? ` style="background-image:url(${esc(cover)})"` : "";
     return `<a class="prov reveal" href="#/s/${esc(s.id)}"${bg}>
     ${cover ? `<span class="sr">${esc(s.name)}</span>` : (s.logo ? `<span class="prov__logo">${img(s.logo, "")}</span>` : `<span class="prov__mono" aria-hidden="true">${esc(initials(s.name))}</span>`) + ico("check-circle", "prov__check") + `<span class="prov__name" translate="no">${esc(s.name)}</span>`}
-    <span class="prov__chip">${esc(s.niche || "Tienda verificada")}</span>
-    <span class="prov__count">${plural(s.count, "producto", "productos")}</span></a>`;
+    <span class="prov__chip">${esc(storeNiches(s)[0] || "Tienda verificada")}</span>
+    <span class="prov__count${s.count > 0 ? "" : " prov__count--soon"}">${storeCount(s)}</span></a>`;
   }
   function storeCard(s, extraMeta = "") {
     return `<a class="store-card reveal" href="#/s/${esc(s.id)}">${storeLogo(s)}
     <span class="store-card__body"><span class="store-card__name" translate="no">${esc(s.name)}</span>
-      <span class="store-card__meta">${[extraMeta, s.niche, s.city, plural(s.count, "producto", "productos")].filter(Boolean).map(esc).join(" · ")}</span>
+      <span class="store-card__meta">${[extraMeta, storeNiches(s).join(" y "), s.city, storeCount(s)].filter(Boolean).map(esc).join(" · ")}</span>
       ${s.verified ? `<span class="vx-status vx-status--info">${ico("shield")}Tienda verificada</span>` : ""}</span>
     ${ico("chev-r")}</a>`;
   }
@@ -1085,7 +1097,7 @@
       <nav class="nicherail" aria-label="Nichos de VEXBIZ">
         <div class="nicherail__track">${niches.slice().sort((a, b) => a.name.localeCompare(b.name, "es")).map((n) => `<a class="nicon reveal" href="#/n/${esc(n.id)}"><span class="nicon__bubble"><img src="assets/img/nichos/${esc(n.id)}.webp" width="96" height="96" alt="" loading="lazy" decoding="async"></span><span class="nicon__name">${esc(n.name)}</span></a>`).join("")}</div>
       </nav>
-      <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas">Ver todo${ico("chev-r")}</a></div><div class="rail" data-providers></div></section>
+      <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas" data-seeall-stores>Ver todas${ico("chev-r")}</a></div><div class="rail" data-providers></div></section>
       <section class="sec" aria-labelledby="t-exp"><div class="sec__head"><h2 class="sec__title" id="t-exp">Explora por interés</h2><a class="seeall" href="#/n/todo" data-seeall>Ver todo${ico("chev-r")}</a></div><div class="rail" data-products></div></section>
       ${home.brands && home.brands.length ? `<section class="sec" aria-labelledby="t-brands"><div class="sec__head"><h2 class="sec__title" id="t-brands">Marcas en VEXBIZ</h2></div>
         <div class="rail">${home.brands.slice(0, 10).map((b) => `<a class="brand-chip reveal" href="#/buscar?q=${encodeURIComponent(b.name)}"><span class="brand-chip__name" translate="no">${esc(b.name)}</span><span class="brand-chip__count">${plural(b.products, "producto", "productos")}</span></a>`).join("")}</div></section>` : ""}
@@ -1095,11 +1107,11 @@
     async mount(el, _p, _q, ctx) {
       const [niches, home, stores2] = await Promise.all([api.niches(), api.home(), api.stores()]);
       const map = new Map(niches.map((n) => [n.id, n]));
-      const certified = stores2.filter((s) => s.verified && s.count > 0).sort((a, b) => b.count - a.count);
+      const certified = stores2.filter((s) => s.verified).sort(storeOrder);
       const cover = (s) => /refrihogar/i.test(s.name) ? "assets/img/prov-refrihogar.webp" : "";
       async function rails() {
         const n = map.get(selected);
-        const provs = certified.filter((s) => selected === "todo" || !n || s.niche === n.name);
+        const provs = certified.filter((s) => selected === "todo" || !n || storeNiches(s).includes(n.name));
         el.querySelector("[data-providers]").innerHTML = provs.length ? provs.map((s) => provCard(s, cover(s))).join("") : `<div style="flex:1;margin-inline:calc(var(--app-gutter) * -1)">${empty("shield", `Sin proveedores certificados en ${esc(n ? n.name : "")}`, "Estamos homologando tiendas de este nicho.")}</div>`;
         const items = selected === "todo" || n && n.count > 0 ? await railProducts(selected, home) : [];
         el.querySelector("[data-products]").innerHTML = items.length ? items.map(pcard).join("") : `<div style="flex:1;margin-inline:calc(var(--app-gutter) * -1)">${nicheEmpty(n)}</div>`;
@@ -1433,7 +1445,7 @@
   var tiendas = {
     title: () => "Tiendas",
     async render() {
-      const all = (await api.stores()).slice().sort((a, b) => b.count - a.count);
+      const all = (await api.stores()).slice().sort(storeOrder);
       return topbar("Proveedores y tiendas") + `<p class="sec__meta" style="padding-bottom:12px">${plural(all.length, "tienda verificada", "tiendas verificadas")} por VEXBIZ</p><div class="stack">${all.map((s) => storeCard(s)).join("")}</div>`;
     }
   };
@@ -1445,7 +1457,7 @@
       const first = await api.search({ store: id, cursor: 0 });
       const hero = `<div class="store-hero"><div class="store-hero__cover store-hero__cover--mono" aria-hidden="true">${storeLogo(s, "store-card__logo store-card__logo--lg")}</div>
       <div class="store-hero__body"><h2 class="store-hero__name" translate="no">${esc(s.name)}</h2>
-      <span class="store-hero__meta">${[s.niche, [s.city, s.state].filter(Boolean).join(", "), plural(s.count, "producto", "productos")].filter(Boolean).map(esc).join(" · ")}</span>
+      <span class="store-hero__meta">${[storeNiches(s).join(" y "), [s.city, s.state].filter(Boolean).join(", "), storeCount(s)].filter(Boolean).map(esc).join(" · ")}</span>
       ${s.verified ? `<span class="vx-status">${ico("shield")}Tienda verificada</span>` : ""}</div></div>`;
       if (!first.total) return topbar(esc(s.name)) + hero + empty("box", "Su catálogo se está sumando a la app", `${esc(s.name)} está cargando sus productos.`, btn("Avísame cuando haya", "vx-btn--secondary", "data-notify"));
       return topbar(esc(s.name)) + hero + await syncNote(first.total, s.count) + `<div class="chips" role="group" aria-label="Ordenar" style="margin-bottom:12px">${SORTS.map(([k, l]) => `<button class="chip" type="button" data-sort="${k}" aria-pressed="${k === "rel"}">${l}</button>`).join("")}</div>

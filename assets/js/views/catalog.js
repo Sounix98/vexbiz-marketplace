@@ -2,7 +2,7 @@
    · Tienda · Buscar. Todo con datos reales de marketplace-api/v1. */
 import { api } from '../api.js';
 import { esc, plural, shortDate, fold } from '../format.js';
-import { ico, img, pcard, storeCard, storeLogo, empty, topbar, rootHead, btn, link, reveal, skeletonGrid, priceLabel, storeName } from '../ui.js';
+import { ico, img, pcard, storeCard, storeLogo, empty, topbar, rootHead, btn, link, reveal, skeletonGrid, priceLabel, storeName, storeNiches, storeCount, storeOrder } from '../ui.js';
 import { prefs } from '../store.js';
 import { nav } from '../nav.js';
 import { nicheEmpty } from './home.js';
@@ -101,7 +101,7 @@ export const nicho = {
 export const tiendas = {
   title: () => 'Tiendas',
   async render() {
-    const all = (await api.stores()).slice().sort((a, b) => b.count - a.count);
+    const all = (await api.stores()).slice().sort(storeOrder);
     return topbar('Proveedores y tiendas') + `<p class="sec__meta" style="padding-bottom:12px">${plural(all.length, 'tienda verificada', 'tiendas verificadas')} por VEXBIZ</p><div class="stack">${all.map((s) => storeCard(s)).join('')}</div>`;
   },
 };
@@ -115,7 +115,7 @@ export const tienda = {
     const first = await api.search({ store: id, cursor: 0 });
     const hero = `<div class="store-hero"><div class="store-hero__cover store-hero__cover--mono" aria-hidden="true">${storeLogo(s, 'store-card__logo store-card__logo--lg')}</div>
       <div class="store-hero__body"><h2 class="store-hero__name" translate="no">${esc(s.name)}</h2>
-      <span class="store-hero__meta">${[s.niche, [s.city, s.state].filter(Boolean).join(', '), plural(s.count, 'producto', 'productos')].filter(Boolean).map(esc).join(' · ')}</span>
+      <span class="store-hero__meta">${[storeNiches(s).join(' y '), [s.city, s.state].filter(Boolean).join(', '), storeCount(s)].filter(Boolean).map(esc).join(' · ')}</span>
       ${s.verified ? `<span class="vx-status">${ico('shield')}Tienda verificada</span>` : ''}</div></div>`;
     if (!first.total) return topbar(esc(s.name)) + hero + empty('box', 'Su catálogo se está sumando a la app', `${esc(s.name)} está cargando sus productos.`, btn('Avísame cuando haya', 'vx-btn--secondary', 'data-notify'));
     return topbar(esc(s.name)) + hero + (await syncNote(first.total, s.count)) +
