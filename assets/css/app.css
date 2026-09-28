@@ -82,7 +82,11 @@ fieldset.group { min-width: 0; }
   padding-bottom: calc(var(--app-bar-h) + var(--vx-sp-6) + env(safe-area-inset-bottom, 0px));
 }
 .screen::-webkit-scrollbar { display: none; }
-.screen--action { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+/* Pantallas con barra de acción: la barra es el último hijo y queda pegada al pie con sticky
+   (antes era absolute dentro del scroll y subía con el contenido). margin-top:auto la baja al pie
+   cuando el contenido es corto. */
+.screen--action { padding-bottom: 0; display: flex; flex-direction: column; }
+.screen--action > * { flex-shrink: 0; }
 .screen.is-enter { animation: scr-in var(--vx-dur) var(--vx-ease-enter); }
 .screen.is-back  { animation: scr-back var(--vx-dur) var(--vx-ease-enter); }
 @keyframes scr-in   { from { opacity: 0; transform: translateX(24px); } }
@@ -469,9 +473,9 @@ fieldset.group { min-width: 0; }
 .step button:disabled { color: var(--vx-text-disabled); cursor: not-allowed; }
 .step output { min-width: 2.5ch; text-align: center; font-weight: 600; font-size: var(--vx-fs-body); font-variant-numeric: tabular-nums; }
 
-/* Barra de acción fija (ficha, carrito, checkout) */
+/* Barra de acción fija al pie (ficha, entrega y pago) */
 .actionbar {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
+  position: sticky; bottom: 0; z-index: 6; margin-top: auto;
   display: flex; align-items: center; gap: var(--vx-sp-3);
   padding: var(--vx-sp-3) var(--app-gutter) calc(var(--vx-sp-3) + env(safe-area-inset-bottom, 0px));
   background: var(--app-card); border-top: 1px solid var(--app-line); box-shadow: 0 -8px 24px rgba(23, 30, 33, 0.08);
@@ -779,3 +783,4 @@ a.row, button.row, .niche-row, .opt { transition: background-color var(--vx-dur-
 .toast__act { margin-left: var(--vx-sp-3); min-height: 32px; padding-inline: var(--vx-sp-3); border-radius: var(--vx-r-pill); background: var(--vx-n-800); color: var(--vx-amber-300); font-weight: 700; }
 .toast__act::after { content: ""; position: absolute; inset: -6px 0; }
 .toast.has-action { display: flex; align-items: center; pointer-events: auto; }
+.screen--action > :nth-last-child(2) { margin-bottom: var(--vx-sp-6); }   /* aire antes de la barra al final del scroll */

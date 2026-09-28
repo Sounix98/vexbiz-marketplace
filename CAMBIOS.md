@@ -2,6 +2,11 @@
 
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
+## 1.3.1 · 28/09 · Barra de «Añadir al carrito» fija al pie
+
+- En la ficha de producto y en Entrega y pago, la barra con la cantidad y «Añadir al carrito» (o el total y «Confirmar pedido») queda siempre pegada al pie de la pantalla. Antes subía con el contenido al hacer scroll y tapaba la ficha.
+- Cuando el contenido es corto, la barra igual se ubica al pie. Al final del scroll queda aire entre el último bloque y la barra.
+
 ## 1.3.0 · 28/09 · Cambios de la auditoría (pautas web + aspecto premium)
 
 Aplicado sobre el CSS y las pantallas ya hechas. No cambia la decisión B1: el precio sigue en botón oscuro.
