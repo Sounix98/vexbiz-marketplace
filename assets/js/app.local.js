@@ -535,7 +535,7 @@
 
   // assets/js/router.js
   var ROOTS = /* @__PURE__ */ new Set(["inicio", "categorias", "carrito", "cuenta"]);
-  var TAB_OF = { inicio: "inicio", categorias: "categorias", n: "categorias", carrito: "carrito", pago: "carrito", pedido: "carrito", cuenta: "cuenta", pedidos: "cuenta", favoritos: "cuenta", login: "cuenta" };
+  var TAB_OF = { inicio: "inicio", categorias: "categorias", n: "categorias", carrito: "carrito", pago: "carrito", pedido: "carrito", cuenta: "cuenta", pedidos: "cuenta", favoritos: "cuenta", login: "cuenta", registro: "cuenta" };
   var TAB_INDEX = { inicio: 0, categorias: 1, carrito: 2, cuenta: 3 };
   function parse(hash) {
     const h = (hash || "").replace(/^#\/?/, "");
@@ -734,8 +734,80 @@
       this.detail = detail || "";
     }
   };
-  async function call(path, { method = "GET", body, params: params2 } = {}) {
-    if (CONFIG.authBase === null) throw new AuthError(0, "auth.unavailable");
+  var DEMO = CONFIG.authBase === null;
+  var DEMO_KEY = "vx-demo-session";
+  var demoSave = (id) => {
+    try {
+      if (id) sessionStorage.setItem(DEMO_KEY, JSON.stringify(id));
+      else sessionStorage.removeItem(DEMO_KEY);
+    } catch (e) {
+    }
+  };
+  var demoLoad = () => {
+    try {
+      return JSON.parse(sessionStorage.getItem(DEMO_KEY) || "null");
+    } catch (e) {
+      return null;
+    }
+  };
+  var cap2 = (w) => w ? w.charAt(0).toUpperCase() + w.slice(1) : "";
+  var nameFromEmail = (email) => {
+    const p = String(email).split("@")[0].replace(/[^a-záéíóúñ]/gi, " ").trim().split(/\s+/);
+    return [cap2(p[0]) || "Carlos", cap2(p[1] || "")].join(" ").trim();
+  };
+  var pause = (ms) => new Promise((r) => setTimeout(r, ms));
+  var demoPending = null;
+  function demoOrders() {
+    const d = (n) => new Date(Date.now() - n * 864e5).toISOString();
+    return [
+      { order_number: "VE-DEMO-3", store_name: "Refrihogar", created_at: d(2), currency: "USD", total: 184.5, reported: 0, item_count: 3, status: "pending_payment", image: "" },
+      { order_number: "VE-DEMO-2", store_name: "Total Herramientas", created_at: d(16), currency: "USD", total: 42, reported: 42, item_count: 1, status: "in_transit", image: "" },
+      { order_number: "VE-DEMO-1", store_name: "MAXIFARMA", created_at: d(40), currency: "USD", total: 19.9, reported: 19.9, item_count: 2, status: "delivered", image: "" }
+    ];
+  }
+  async function demoCall(path, { body = {} } = {}) {
+    await pause(path === "/auth/me" || path === "/auth/refresh" ? 120 : 850);
+    const ok = (identity2) => ({ access_token: "demo", expires_in: 0, identity: identity2 });
+    switch (path) {
+      case "/auth/login": {
+        const e = String(body.email || "").toLowerCase();
+        if (e.includes("bloquead")) throw new AuthError(423, "auth.account_locked");
+        if (e.includes("sinclave")) throw new AuthError(409, "auth.password_not_set");
+        if (e.includes("error") || body.password === "error") throw new AuthError(401, "auth.invalid_credentials");
+        const id = { full_name: nameFromEmail(e), email: e, areas: ["account", "purchases"] };
+        if (e.includes("2fa")) {
+          demoPending = id;
+          return { two_factor_required: true, ticket: "demo" };
+        }
+        return ok(id);
+      }
+      case "/auth/2fa/verify":
+        if (String(body.code).trim() !== "123456" || !demoPending) throw new AuthError(422, "auth.invalid_code", "Ese código no es válido.");
+        return ok(demoPending);
+      case "/auth/register": {
+        const e = String(body.email || "").toLowerCase();
+        if (e.includes("existe")) throw new AuthError(409, "auth.email_taken", "Ya hay una cuenta con ese correo. Inicia sesión o recupera tu contraseña.");
+        return ok({ full_name: `${body.first_name} ${body.last_name}`.trim(), email: e, areas: ["account", "purchases"] });
+      }
+      case "/auth/refresh": {
+        const id = demoLoad();
+        if (!id) throw new AuthError(401, "auth.no_session");
+        return ok(id);
+      }
+      case "/auth/me":
+        return identity;
+      case "/auth/logout":
+        demoSave(null);
+        return {};
+      case "/account-api/v1/orders":
+        return { data: demoOrders(), next_cursor: "" };
+      default:
+        throw new AuthError(404, "demo.not_found");
+    }
+  }
+  async function call(path, opts = {}) {
+    if (DEMO) return demoCall(path, opts);
+    const { method = "GET", body, params: params2 } = opts;
     let url = CONFIG.authBase + path;
     if (params2) {
       const q = new URLSearchParams(Object.entries(params2).filter(([, v]) => v !== "" && v != null));
@@ -776,6 +848,12 @@
     timer = null;
   }
   async function loadMe(fallback) {
+    if (DEMO) {
+      identity = fallback || demoLoad();
+      demoSave(identity);
+      emit2();
+      return identity;
+    }
     try {
       const me = await call("/auth/me");
       identity = me && me.data || me || fallback || null;
@@ -806,10 +884,11 @@
     });
     return renewing;
   }
-  var hasHint = () => /(?:^|;\s*)vexbiz_user_activa=1/.test(document.cookie);
+  var hasHint = () => DEMO ? !!demoLoad() : /(?:^|;\s*)vexbiz_user_activa=1/.test(document.cookie);
   var booting = null;
   var auth = {
-    available: () => CONFIG.authBase !== null,
+    available: () => true,
+    demo: () => DEMO,
     user: () => identity,
     signedIn: () => !!identity && !!token,
     firstName() {
@@ -823,7 +902,7 @@
     /* Al abrir la app: si el sitio dejó la pista de sesión, renueva y trae la identidad. */
     boot() {
       if (booting) return booting;
-      booting = !auth.available() || !hasHint() ? Promise.resolve(null) : call("/auth/refresh", { method: "POST", body: {} }).then((res) => {
+      booting = !hasHint() ? Promise.resolve(null) : call("/auth/refresh", { method: "POST", body: {} }).then((res) => {
         adopt(res);
         return loadMe(res.identity);
       }).catch(() => {
@@ -842,6 +921,15 @@
     },
     async verify(ticket, code) {
       const res = await call("/auth/2fa/verify", { method: "POST", body: { ticket, code } });
+      adopt(res);
+      await loadMe(res.identity);
+      return { ok: true };
+    },
+    /* Alta de cuenta. En la app real el alta se hace en ve.vexbiz.com/register (endpoint no confirmado),
+       así que solo el modo demostración la resuelve aquí. */
+    async register(data) {
+      if (!DEMO) throw new AuthError(0, "auth.register_on_site");
+      const res = await call("/auth/register", { method: "POST", body: data });
       adopt(res);
       await loadMe(res.identity);
       return { ok: true };
@@ -1425,13 +1513,14 @@
       <span class="vx-status vx-status--info" style="margin-top:6px">${ico("clock")}Esperando verificación del pago</span></span><span class="row__end">${money(o.total)}</span></div>`).join("")}</div>`;
   var realRow = (o) => {
     const left = auth.leftToPay(o), tone = STATUS_TONE[o.status] || "neutral";
-    return `<a class="row" style="align-items:flex-start" href="${CONFIG.siteUrl}/order/${encodeURIComponent(o.order_number)}" target="_blank" rel="noopener">
+    const open = auth.demo() ? `<button type="button" class="row" style="align-items:flex-start" data-toast="Pedido de ejemplo: en la app publicada abre el detalle y el pago en ve.vexbiz.com">` : `<a class="row" style="align-items:flex-start" href="${CONFIG.siteUrl}/order/${encodeURIComponent(o.order_number)}" target="_blank" rel="noopener">`;
+    return `${open}
     <span class="row__thumb order-thumb${o.image ? "" : " row__thumb--ico"}">${o.image ? img(o.image, "") : ico("box")}</span>
     <span class="row__body"><span class="row__title">Pedido #${esc(o.order_number)}</span>
       <span class="row__sub">${[o.store_name, o.item_count ? plural(o.item_count, "artículo", "artículos") : "", o.created_at ? shortDate(o.created_at) : ""].filter(Boolean).map(esc).join(" · ")}</span>
       <span class="vx-status vx-status--${tone}" style="margin-top:6px">${esc(STATUS[o.status] || o.status || "En proceso")}</span>
       ${left > 0 ? `<span class="row__sub" style="margin-top:4px">Falta pagar <b>${money(left, o.currency || CONFIG.currency)}</b></span>` : ""}</span>
-    <span class="row__end">${money(o.total || 0, o.currency || CONFIG.currency)}</span></a>`;
+    <span class="row__end">${money(o.total || 0, o.currency || CONFIG.currency)}</span>${auth.demo() ? "</button>" : "</a>"}`;
   };
   var pedidos = {
     title: () => "Mis pedidos",
@@ -1445,7 +1534,7 @@
         } catch (e) {
           block = `<div class="msg msg--danger" role="alert" style="margin:0 var(--app-gutter)">${ico("alert")}<span>No pudimos traer tus compras de VEXBIZ. Revisa tu conexión y vuelve a intentarlo.</span></div>`;
         }
-        return topbar("Mis pedidos") + `<p class="sec__meta" style="padding-bottom:12px">Compras de ${esc(auth.firstName())} en VEXBIZ · toca un pedido para ver el detalle y pagar</p>${block}` + (list.length ? `<p class="label" style="padding:20px var(--app-gutter) 8px">Hechos en esta app</p>${localRows(list)}` : "");
+        return topbar("Mis pedidos") + `<p class="sec__meta" style="padding-bottom:12px">${auth.demo() ? "Modo demostración · pedidos de ejemplo" : `Compras de ${esc(auth.firstName())} en VEXBIZ · toca un pedido para ver el detalle y pagar`}</p>${block}` + (list.length ? `<p class="label" style="padding:20px var(--app-gutter) 8px">Hechos en esta app</p>${localRows(list)}` : "");
       }
       if (!list.length) return topbar("Mis pedidos") + empty("box", "Aún no tienes pedidos", "Cuando compres, aquí verás cada pedido con su estado y el comprobante de pago.", link("Explorar productos", "#/inicio")) + signinHint();
       return topbar("Mis pedidos") + localRows(list) + signinHint();
@@ -1481,10 +1570,11 @@
       const name = u.full_name || u.name || "";
       return `<div class="profile"><span class="profile__ava profile__ava--in" data-initials="${esc(initials(name || u.email))}">${u.avatar_url ? `<img src="${esc(u.avatar_url)}" alt="" referrerpolicy="no-referrer" data-fallback>` : esc(initials(name || u.email))}</span>
       <span class="profile__body"><b>Hola, ${esc(auth.firstName())}</b><span>${esc(name || "Tu cuenta VEXBIZ")}</span></span>
-      <button class="vx-btn" type="button" data-logout><span class="vx-btn__label">Salir</span></button></div>`;
+      <button class="vx-btn" type="button" data-logout><span class="vx-btn__label">Salir</span></button></div>${auth.demo() ? '<p class="auth__alt" style="padding:12px var(--app-gutter) 0">Sesión de demostración: se borra al cerrar esta pestaña.</p>' : ""}`;
     }
-    return `<div class="profile"><span class="profile__ava">${ico("user")}</span><span class="profile__body"><b>Hola</b><span>${auth.available() ? "Entra para ver tus compras de VEXBIZ." : "Tus pedidos y favoritos se guardan en este teléfono."}</span></span>
-    <a class="vx-btn" href="#/login"><span class="vx-btn__label">Entrar</span></a></div>`;
+    return `<div class="profile"><span class="profile__ava">${ico("user")}</span><span class="profile__body"><b>Hola</b><span>Entra para ver tus compras de VEXBIZ.</span></span>
+    <a class="vx-btn" href="#/login"><span class="vx-btn__label">Entrar</span></a></div>
+    <p class="auth__alt" style="padding:12px var(--app-gutter) 0">¿Todavía no tienes cuenta? <a class="textlink" href="#/registro">Crear cuenta gratis</a></p>`;
   }
   var cuenta = {
     title: () => "Cuenta",
@@ -1504,6 +1594,7 @@
         ${row("", "book", "Academia VEXBIZ", "Cursos y certificaciones", "", ' data-toast="Academia VEXBIZ: cursos para técnicos y comercios"')}
         ${row("", "store", "Vender en VEXBIZ", "Publica tu catálogo", "", ' data-toast="Vender en VEXBIZ: registro de proveedor en ve.vexbiz.com"')}
         ${row("", "help", "Soporte", "Ayuda y reclamos", "", ' data-toast="Soporte: respondemos en menos de 2 horas hábiles"')}
+        ${auth.demo() ? row("acceso-demo.html", "lock", "Estados de acceso", "Demo: todos los estados de Iniciar sesión y Crear cuenta") : ""}
       </div>
       <p class="label" style="padding:20px var(--app-gutter) 8px">Catálogo</p><div class="list">
         ${row("", "globe", m.mode === "live" ? "En vivo desde ve.vexbiz.com" : "Copia guardada de ve.vexbiz.com", `${plural(m.products, "producto", "productos")} · sincronizado el ${shortDate(m.fetchedAt)}`, "<span></span>")}
@@ -1576,15 +1667,10 @@
   var site = (path) => CONFIG.siteUrl + path;
   var ext = (label, path, cls = "textlink") => `<a class="${cls}" href="${site(path)}" target="_blank" rel="noopener">${label}</a>`;
   var safeNext = (n) => n && /^#\/[a-z]/.test(n) && !n.startsWith("#/login") ? n : "#/cuenta";
-  function unavailable() {
-    return topbar("Iniciar sesión") + `<div class="auth"><div class="auth__card">
-      <div class="auth__head"><span class="auth__badge">${ico("lock")}</span><div><h1>Tu cuenta VEXBIZ</h1><p>Compras, pedidos y servicios.</p></div></div>
-      <div class="msg msg--info">${ico("globe")}<span>Esta copia de la app no está alojada en vexbiz.com, así que no puede abrir tu sesión. Cuando la app se publique en el dominio de VEXBIZ, entras aquí con tu mismo correo y contraseña.</span></div>
-      <p class="auth__alt" style="text-align:left">Mientras tanto, tus pedidos y favoritos se guardan en este teléfono.</p>
-      ${ext('<span class="vx-btn__label">Entrar en ve.vexbiz.com</span>', "/login", "vx-btn vx-btn--primary vx-btn--block")}
-    </div>
-    <p class="auth__alt">¿Todavía no tienes cuenta en Venezuela? ${ext("Crear cuenta gratis", "/register")}</p></div>`;
-  }
+  var demoNote = (kind) => auth.demo() ? `<div class="msg msg--info" role="note">${ico("help")}<span><b>Modo demostración.</b> Nada sale de este teléfono. ${kind === "register" ? "Cualquier dato válido crea la cuenta; un correo con «existe» muestra el aviso de correo ya registrado." : "Cualquier correo y contraseña entran. Un correo con «2fa» pide código (123456), uno con «bloqueada» muestra el bloqueo y la contraseña «error» falla."}</span></div>` : "";
+  var safeNote = () => `<p class="auth__safe">${ico("lock")}<span>${auth.demo() ? "En la app publicada, la conexión va directo a VEXBIZ y la app no guarda tu contraseña." : "La conexión va directo a VEXBIZ. La app no guarda tu contraseña."}</span></p>`;
+  var toRegister = (label) => auth.demo() ? `<a class="textlink" href="#/registro">${label}</a>` : ext(label, "/register");
+  var toLogin = (label) => `<a class="textlink" href="#/login">${label}</a>`;
   var stepPassword = () => `
   <form novalidate data-form="password">
     <div class="msg msg--danger" role="alert" data-error hidden></div>
@@ -1608,18 +1694,17 @@
     title: () => "Iniciar sesión",
     noBar: true,
     render(_p, q) {
-      if (!auth.available()) return unavailable();
       if (auth.signedIn()) return topbar("Iniciar sesión") + `<div class="auth"><div class="msg msg--info">${ico("check-circle")}<span>Ya entraste como ${esc(auth.firstName())}.</span></div></div>`;
       return topbar("Iniciar sesión") + `<div class="auth"><div class="auth__card">
         <div class="auth__head"><span class="auth__badge">${ico("shield")}</span><div><h1 data-step-title>Iniciar sesión</h1><p data-step-sub>Ingresa con tu email y contraseña registrados en Venezuela.</p></div></div>
+        ${demoNote("login")}
         <div data-step>${stepPassword()}</div>
-        <p class="auth__safe">${ico("lock")}<span>La conexión va directo a VEXBIZ. La app no guarda tu contraseña.</span></p>
+        ${safeNote()}
       </div>
-      <p class="auth__alt">¿Todavía no tienes cuenta en Venezuela? ${ext("Crear cuenta gratis", "/register")}</p></div>`;
+      <p class="auth__alt">¿Todavía no tienes cuenta en Venezuela? ${toRegister("Crear cuenta gratis")}</p></div>`;
     },
     mount(el, _p, q) {
       const next = safeNext(q && q.next);
-      if (!auth.available()) return;
       if (auth.signedIn()) {
         nav.go(next, true);
         return;
@@ -1743,10 +1828,133 @@
       bindPassword();
     }
   };
+  var INTENT = {
+    buy: { ico: "cart", label: "Comprar", sub: "Regístrate gratis para comprar, vender o trabajar como técnico en Venezuela." },
+    sell: { ico: "store", label: "Vender", sub: "Crea tu cuenta y da de alta tu empresa en Venezuela. Sin cuota de entrada: pagas una comisión solo sobre lo que vendes." },
+    tech: { ico: "tools", label: "Técnico", sub: "Crea tu cuenta y en un minuto tendrás tu perfil de técnico en Venezuela. Después te pedimos tu cédula, tus oficios y tu zona; VexBiz revisa y te avisa." }
+  };
+  var RULES = [
+    ["Mínimo 10 caracteres", (p) => p.length >= 10],
+    ["Al menos una letra", (p) => /\p{L}/u.test(p)],
+    ["Al menos un número", (p) => /\d/.test(p)]
+  ];
+  var rulesHtml = (p) => RULES.map(([t, f]) => {
+    const ok = f(p);
+    return `<li class="${ok ? "is-ok" : ""}">${ico(ok ? "check-circle" : "dot")}<span>${t}</span><span class="sr">${ok ? ": cumple" : ": falta"}</span></li>`;
+  }).join("");
+  var registro = {
+    title: () => "Crear cuenta",
+    noBar: true,
+    render(_p, q) {
+      if (auth.signedIn()) return topbar("Crear cuenta") + `<div class="auth"><div class="msg msg--info">${ico("check-circle")}<span>Ya entraste como ${esc(auth.firstName())}.</span></div></div>`;
+      const it = INTENT[(q && q.quiero) in INTENT ? q.quiero : "buy"];
+      const key = Object.keys(INTENT).find((k) => INTENT[k] === it);
+      if (!auth.demo()) {
+        return topbar("Crear cuenta") + `<div class="auth"><div class="auth__card">
+        <div class="auth__head"><span class="auth__badge">${ico("user")}</span><div><h1>Crear cuenta</h1><p>${esc(it.sub)}</p></div></div>
+        ${ext('<span class="vx-btn__label">Crear mi cuenta en ve.vexbiz.com</span>', "/register", "vx-btn vx-btn--primary vx-btn--block vx-btn--lg")}
+        </div><p class="auth__alt">¿Ya tienes una cuenta registrada? ${toLogin("Iniciar sesión")}</p></div>`;
+      }
+      return topbar("Crear cuenta") + `<div class="auth" data-reg><div class="auth__card">
+      <div class="auth__head"><span class="auth__badge">${ico("user")}</span><div><h1>Crear cuenta</h1><p data-intent-sub>${esc(it.sub)}</p></div></div>
+      ${demoNote("register")}
+      <form novalidate data-form="register">
+        <div class="msg msg--danger" role="alert" data-error hidden></div>
+        <fieldset class="seg"><legend>Quiero</legend>${Object.entries(INTENT).map(([k, v]) => `<label>${ico(v.ico)}${v.label}<input type="radio" name="intent" value="${k}"${k === key ? " checked" : ""}></label>`).join("")}</fieldset>
+        <div class="fld-row">
+          <div class="fld"><label for="rg-name">Nombre *</label><div class="fld__box"><input id="rg-name" name="name" type="text" autocomplete="given-name" placeholder="Ej. Carlos"></div></div>
+          <div class="fld"><label for="rg-last">Apellido *</label><div class="fld__box"><input id="rg-last" name="last" type="text" autocomplete="family-name" placeholder="Ej. Mendoza"></div></div>
+        </div>
+        <div class="fld"><label for="rg-email">Correo electrónico *</label><div class="fld__box">${ico("mail")}<input id="rg-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="tunombre@empresa.com"></div></div>
+        <div class="fld"><label for="rg-pass">Contraseña de acceso *</label><div class="fld__box">${ico("lock")}<input id="rg-pass" name="password" type="password" autocomplete="new-password" placeholder="Mínimo 10 caracteres" aria-describedby="rg-rules">
+          <button class="iconbtn" type="button" data-peek aria-pressed="false" aria-label="Ver contraseña" aria-controls="rg-pass">${ico("eye")}</button></div>
+          <ul class="rules" id="rg-rules" data-rules>${rulesHtml("")}</ul></div>
+        <div class="fld"><label for="rg-ref">Código de invitación (opcional)</label><div class="fld__box"><input id="rg-ref" name="ref" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Ej. VX-8942"></div></div>
+        <button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="submit" data-submit><span class="vx-btn__label">Registrar mi cuenta</span></button>
+        <p class="auth__legal">Al registrarte, confirmas que aceptas nuestros ${ext("Términos y Condiciones", "/terms")} y la ${ext("Política de Privacidad", "/privacy")}.</p>
+      </form></div>
+      <p class="auth__alt">¿Ya tienes una cuenta registrada? ${toLogin("Iniciar sesión")}</p></div>`;
+    },
+    mount(el, _p, q) {
+      if (auth.signedIn()) {
+        nav.go("#/cuenta", true);
+        return;
+      }
+      const form = el.querySelector('[data-form="register"]');
+      if (!form) return;
+      const f = form.elements, err = form.querySelector("[data-error]"), btn2 = form.querySelector("[data-submit]");
+      const show = (t) => {
+        err.hidden = !t;
+        err.innerHTML = t ? ico("alert") + `<span>${esc(t)}</span>` : "";
+      };
+      const mark = (i, bad) => {
+        const b = i.closest(".fld");
+        if (b) b.classList.toggle("fld--bad", !!bad);
+      };
+      form.addEventListener("input", (e) => {
+        if (e.target.name === "password") form.querySelector("[data-rules]").innerHTML = rulesHtml(e.target.value);
+        if (e.target.name !== "intent") {
+          mark(e.target, false);
+          show("");
+        }
+      });
+      form.addEventListener("change", (e) => {
+        if (e.target.name === "intent") el.querySelector("[data-intent-sub]").textContent = INTENT[e.target.value].sub;
+      });
+      const peek = form.querySelector("[data-peek]");
+      peek.addEventListener("click", () => {
+        const on = f.password.type === "password";
+        f.password.type = on ? "text" : "password";
+        peek.setAttribute("aria-pressed", String(on));
+        peek.setAttribute("aria-label", on ? "Ocultar contraseña" : "Ver contraseña");
+        peek.querySelector("use").setAttribute("href", "#i-" + (on ? "eye-off" : "eye"));
+      });
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (btn2.dataset.state) return;
+        const checks = [
+          [f.name, !f.name.value.trim(), "Escribe tu nombre."],
+          [f.last, !f.last.value.trim(), "Escribe tu apellido."],
+          [f.email, !/^\S+@\S+\.\S+$/.test(f.email.value.trim()), "Escribe un correo válido, por ejemplo tunombre@empresa.com."],
+          [f.password, !RULES.every(([, t]) => t(f.password.value)), "La contraseña todavía no cumple los tres requisitos."]
+        ];
+        const bad = checks.find((c) => c[1]);
+        if (bad) {
+          mark(bad[0], true);
+          show(bad[2]);
+          bad[0].focus();
+          return;
+        }
+        const label = btn2.querySelector(".vx-btn__label"), idle = label.textContent;
+        btn2.dataset.state = "sending";
+        btn2.setAttribute("aria-busy", "true");
+        label.textContent = "Creando cuenta…";
+        show("");
+        try {
+          await auth.register({ first_name: f.name.value.trim(), last_name: f.last.value.trim(), email: f.email.value.trim(), password: f.password.value, invitation_code: f.ref.value.trim(), intent: form.querySelector('[name="intent"]:checked').value });
+          const intent = form.querySelector('[name="intent"]:checked').value;
+          el.querySelector("[data-reg]").outerHTML = `<div class="done done--auth"><span class="done__ico">${ico("check-circle")}</span><h1 tabindex="-1" data-focus>Cuenta creada</h1>
+          <p>Bienvenido a VEXBIZ, ${esc(auth.firstName())}. ${intent === "sell" ? "El siguiente paso es dar de alta tu empresa." : intent === "tech" ? "El siguiente paso es completar tu perfil de técnico." : "Ya puedes comprar en tiendas verificadas de Venezuela."}</p></div>
+          <div class="stack">${intent === "buy" ? '<a class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" href="#/inicio"><span class="vx-btn__label">Empezar a comprar</span></a><a class="vx-btn vx-btn--ghost vx-btn--block" href="#/cuenta"><span class="vx-btn__label">Ir a mi cuenta</span></a>' : '<a class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" href="#/cuenta"><span class="vx-btn__label">Ir a mi cuenta</span></a><a class="vx-btn vx-btn--ghost vx-btn--block" href="#/inicio"><span class="vx-btn__label">Ver el marketplace</span></a>'}</div>`;
+          const h = el.querySelector("[data-focus]");
+          if (h) h.focus({ preventScroll: true });
+        } catch (x) {
+          btn2.removeAttribute("data-state");
+          btn2.removeAttribute("aria-busy");
+          label.textContent = idle;
+          show(x.detail || (x.status === 0 ? "No hay conexión. Comprueba tu red e inténtalo otra vez." : "No pudimos crear la cuenta. Inténtalo otra vez."));
+          if (x.code === "auth.email_taken") {
+            mark(f.email, true);
+            f.email.focus();
+          }
+        }
+      });
+    }
+  };
 
   // assets/js/main.js
   CONFIG.version = document.documentElement.dataset.version || "1.0";
-  var views = { inicio: home_default, categorias, n: nicho, p: product_default, s: tienda, tiendas, buscar, carrito, pago, pedido, pedidos, cuenta, favoritos, login, error };
+  var views = { inicio: home_default, categorias, n: nicho, p: product_default, s: tienda, tiendas, buscar, carrito, pago, pedido, pedidos, cuenta, favoritos, login, registro, error };
   var app = document.querySelector("[data-app]");
   var bar = document.querySelector("[data-tabbar]");
   var host = document.getElementById("screen-host");
@@ -1860,7 +2068,7 @@
     router.start();
     badge(false);
     auth.subscribe(() => {
-      if (!/^#\/login/.test(location.hash)) router.rerender();
+      if (!/^#\/(login|registro)/.test(location.hash)) router.rerender();
     });
     auth.boot();
     registerSW();

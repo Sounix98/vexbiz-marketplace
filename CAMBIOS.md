@@ -2,6 +2,22 @@
 
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
+## 1.2.0 · 28/09 · Iniciar sesión y Crear cuenta integrados en la app
+
+- Abierta desde la carpeta (doble clic en `index.html`), la app entra en **modo demostración**: Iniciar sesión funciona con respuestas simuladas y nada sale del teléfono. Antes mostraba un aviso de que no podía abrir sesión. Cada formulario lo avisa con un recuadro azul.
+- Nueva pantalla **Crear cuenta** dentro de la app (`index.html#/registro`), la misma de `acceso-demo.html`. Se llega desde Cuenta → «Crear cuenta gratis» y desde Iniciar sesión.
+- Al entrar o registrarte, la sesión de demostración recorre toda la app:
+  - Inicio y Cuenta dicen «Hola, <nombre>».
+  - Mis pedidos muestra tres **pedidos de ejemplo** (pendiente de pago, en camino, entregado).
+  - Salir cierra la sesión.
+  - La sesión se mantiene al recargar y se borra al cerrar la pestaña.
+- Cómo probar los estados escribiendo:
+  - Iniciar sesión: cualquier correo entra; un correo con «2fa» pide código (123456), uno con «bloqueada» muestra el bloqueo y la contraseña «error» falla.
+  - Crear cuenta: un correo con «existe» muestra el aviso de correo ya registrado.
+- «Cuenta creada» cambia según «Quiero»: Comprar lleva a «Empezar a comprar»; Vender y Técnico llevan a «Ir a mi cuenta».
+- En Cuenta (solo en modo demostración) hay una fila **Estados de acceso** que abre `acceso-demo.html`. Esa página tiene un botón «Ir a la app» para volver.
+- Con la app publicada en vexbiz.com todo esto se apaga solo: se usa la cuenta real y Crear cuenta lleva a ve.vexbiz.com/register.
+
 ## 1.1.2 · 28/09 · Copia de Iniciar sesión y Crear cuenta para visualizar
 
 - Nuevo **`acceso-demo.html`** (doble clic): copia solo para visualización del acceso. No se conecta a ninguna API; todas las respuestas son simuladas.

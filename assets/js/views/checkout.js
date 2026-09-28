@@ -108,13 +108,15 @@ const localRows = (list) => `<div class="list">${list.map((o) => `<div class="ro
 /* Compra real de la cuenta (GET /account-api/v1/orders). El detalle y el pago siguen en el sitio. */
 const realRow = (o) => {
   const left = auth.leftToPay(o), tone = STATUS_TONE[o.status] || 'neutral';
-  return `<a class="row" style="align-items:flex-start" href="${CONFIG.siteUrl}/order/${encodeURIComponent(o.order_number)}" target="_blank" rel="noopener">
+  const open = auth.demo() ? `<button type="button" class="row" style="align-items:flex-start" data-toast="Pedido de ejemplo: en la app publicada abre el detalle y el pago en ve.vexbiz.com">`
+    : `<a class="row" style="align-items:flex-start" href="${CONFIG.siteUrl}/order/${encodeURIComponent(o.order_number)}" target="_blank" rel="noopener">`;
+  return `${open}
     <span class="row__thumb order-thumb${o.image ? '' : ' row__thumb--ico'}">${o.image ? img(o.image, '') : ico('box')}</span>
     <span class="row__body"><span class="row__title">Pedido #${esc(o.order_number)}</span>
       <span class="row__sub">${[o.store_name, o.item_count ? plural(o.item_count, 'artículo', 'artículos') : '', o.created_at ? shortDate(o.created_at) : ''].filter(Boolean).map(esc).join(' · ')}</span>
       <span class="vx-status vx-status--${tone}" style="margin-top:6px">${esc(STATUS[o.status] || o.status || 'En proceso')}</span>
       ${left > 0 ? `<span class="row__sub" style="margin-top:4px">Falta pagar <b>${money(left, o.currency || CONFIG.currency)}</b></span>` : ''}</span>
-    <span class="row__end">${money(o.total || 0, o.currency || CONFIG.currency)}</span></a>`;
+    <span class="row__end">${money(o.total || 0, o.currency || CONFIG.currency)}</span>${auth.demo() ? '</button>' : '</a>'}`;
 };
 
 export const pedidos = {
@@ -131,7 +133,7 @@ export const pedidos = {
       } catch (e) {
         block = `<div class="msg msg--danger" role="alert" style="margin:0 var(--app-gutter)">${ico('alert')}<span>No pudimos traer tus compras de VEXBIZ. Revisa tu conexión y vuelve a intentarlo.</span></div>`;
       }
-      return topbar('Mis pedidos') + `<p class="sec__meta" style="padding-bottom:12px">Compras de ${esc(auth.firstName())} en VEXBIZ · toca un pedido para ver el detalle y pagar</p>${block}` +
+      return topbar('Mis pedidos') + `<p class="sec__meta" style="padding-bottom:12px">${auth.demo() ? 'Modo demostración · pedidos de ejemplo' : `Compras de ${esc(auth.firstName())} en VEXBIZ · toca un pedido para ver el detalle y pagar`}</p>${block}` +
         (list.length ? `<p class="label" style="padding:20px var(--app-gutter) 8px">Hechos en esta app</p>${localRows(list)}` : '');
     }
     if (!list.length) return topbar('Mis pedidos') + empty('box', 'Aún no tienes pedidos', 'Cuando compres, aquí verás cada pedido con su estado y el comprobante de pago.', link('Explorar productos', '#/inicio')) + signinHint();

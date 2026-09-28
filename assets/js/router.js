@@ -4,7 +4,7 @@
 import { skeletonScreen, reveal, reduce } from './ui.js';
 
 const ROOTS = new Set(['inicio', 'categorias', 'carrito', 'cuenta']);
-const TAB_OF = { inicio: 'inicio', categorias: 'categorias', n: 'categorias', carrito: 'carrito', pago: 'carrito', pedido: 'carrito', cuenta: 'cuenta', pedidos: 'cuenta', favoritos: 'cuenta', login: 'cuenta' };
+const TAB_OF = { inicio: 'inicio', categorias: 'categorias', n: 'categorias', carrito: 'carrito', pago: 'carrito', pedido: 'carrito', cuenta: 'cuenta', pedidos: 'cuenta', favoritos: 'cuenta', login: 'cuenta', registro: 'cuenta' };
 const TAB_INDEX = { inicio: 0, categorias: 1, carrito: 2, cuenta: 3 };
 
 export function parse(hash) {

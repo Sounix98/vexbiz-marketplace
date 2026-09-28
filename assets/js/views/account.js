@@ -21,10 +21,11 @@ function profile() {
     const name = u.full_name || u.name || '';
     return `<div class="profile"><span class="profile__ava profile__ava--in" data-initials="${esc(initials(name || u.email))}">${u.avatar_url ? `<img src="${esc(u.avatar_url)}" alt="" referrerpolicy="no-referrer" data-fallback>` : esc(initials(name || u.email))}</span>
       <span class="profile__body"><b>Hola, ${esc(auth.firstName())}</b><span>${esc(name || 'Tu cuenta VEXBIZ')}</span></span>
-      <button class="vx-btn" type="button" data-logout><span class="vx-btn__label">Salir</span></button></div>`;
+      <button class="vx-btn" type="button" data-logout><span class="vx-btn__label">Salir</span></button></div>${auth.demo() ? '<p class="auth__alt" style="padding:12px var(--app-gutter) 0">Sesión de demostración: se borra al cerrar esta pestaña.</p>' : ''}`;
   }
-  return `<div class="profile"><span class="profile__ava">${ico('user')}</span><span class="profile__body"><b>Hola</b><span>${auth.available() ? 'Entra para ver tus compras de VEXBIZ.' : 'Tus pedidos y favoritos se guardan en este teléfono.'}</span></span>
-    <a class="vx-btn" href="#/login"><span class="vx-btn__label">Entrar</span></a></div>`;
+  return `<div class="profile"><span class="profile__ava">${ico('user')}</span><span class="profile__body"><b>Hola</b><span>Entra para ver tus compras de VEXBIZ.</span></span>
+    <a class="vx-btn" href="#/login"><span class="vx-btn__label">Entrar</span></a></div>
+    <p class="auth__alt" style="padding:12px var(--app-gutter) 0">¿Todavía no tienes cuenta? <a class="textlink" href="#/registro">Crear cuenta gratis</a></p>`;
 }
 
 export const cuenta = {
@@ -47,6 +48,7 @@ export const cuenta = {
         ${row('', 'book', 'Academia VEXBIZ', 'Cursos y certificaciones', '', ' data-toast="Academia VEXBIZ: cursos para técnicos y comercios"')}
         ${row('', 'store', 'Vender en VEXBIZ', 'Publica tu catálogo', '', ' data-toast="Vender en VEXBIZ: registro de proveedor en ve.vexbiz.com"')}
         ${row('', 'help', 'Soporte', 'Ayuda y reclamos', '', ' data-toast="Soporte: respondemos en menos de 2 horas hábiles"')}
+        ${auth.demo() ? row('acceso-demo.html', 'lock', 'Estados de acceso', 'Demo: todos los estados de Iniciar sesión y Crear cuenta') : ''}
       </div>
       <p class="label" style="padding:20px var(--app-gutter) 8px">Catálogo</p><div class="list">
         ${row('', 'globe', m.mode === 'live' ? 'En vivo desde ve.vexbiz.com' : 'Copia guardada de ve.vexbiz.com', `${plural(m.products, 'producto', 'productos')} · sincronizado el ${shortDate(m.fetchedAt)}`, '<span></span>')}

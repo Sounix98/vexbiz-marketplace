@@ -10,8 +10,9 @@
 
    El token de acceso vive solo en memoria (nunca en localStorage). La renovación depende de la
    cookie httpOnly del dominio, así que el login funciona únicamente cuando la app se sirve desde
-   un dominio de vexbiz.com (mismo origen que /auth). Fuera de ahí, auth.available() es false y
-   la app lo explica en vez de mostrar un formulario que no puede funcionar. */
+   un dominio de vexbiz.com (mismo origen que /auth). Fuera de ahí (doble clic, GitHub Pages, local)
+   la app entra en MODO DEMOSTRACIÓN: mismas pantallas y mismos estados, respuestas simuladas en
+   este archivo (demoCall), nada sale del teléfono. auth.demo() lo indica para avisarlo en pantalla. */
 import { CONFIG } from './config.js';
 
 const RENEW_MARGIN = 60;               // segundos antes de que venza el token
@@ -29,8 +30,56 @@ class AuthError extends Error {
   constructor(status, code, detail) { super(detail || code || 'Error ' + status); this.status = status; this.code = code || ''; this.detail = detail || ''; }
 }
 
-async function call(path, { method = 'GET', body, params } = {}) {
-  if (CONFIG.authBase === null) throw new AuthError(0, 'auth.unavailable');
+/* ---------- Modo demostración: respuestas simuladas con la misma forma que la API ---------- */
+const DEMO = CONFIG.authBase === null;
+const DEMO_KEY = 'vx-demo-session';
+const demoSave = (id) => { try { if (id) sessionStorage.setItem(DEMO_KEY, JSON.stringify(id)); else sessionStorage.removeItem(DEMO_KEY); } catch (e) {} };
+const demoLoad = () => { try { return JSON.parse(sessionStorage.getItem(DEMO_KEY) || 'null'); } catch (e) { return null; } };
+const cap = (w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : '');
+const nameFromEmail = (email) => { const p = String(email).split('@')[0].replace(/[^a-záéíóúñ]/gi, ' ').trim().split(/\s+/); return [cap(p[0]) || 'Carlos', cap(p[1] || '')].join(' ').trim(); };
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+let demoPending = null;                                    // identidad esperando el código 2FA
+function demoOrders() {
+  // <!-- mock --> pedidos de ejemplo, solo en modo demostración
+  const d = (n) => new Date(Date.now() - n * 864e5).toISOString();
+  return [
+    { order_number: 'VE-DEMO-3', store_name: 'Refrihogar', created_at: d(2), currency: 'USD', total: 184.5, reported: 0, item_count: 3, status: 'pending_payment', image: '' },
+    { order_number: 'VE-DEMO-2', store_name: 'Total Herramientas', created_at: d(16), currency: 'USD', total: 42, reported: 42, item_count: 1, status: 'in_transit', image: '' },
+    { order_number: 'VE-DEMO-1', store_name: 'MAXIFARMA', created_at: d(40), currency: 'USD', total: 19.9, reported: 19.9, item_count: 2, status: 'delivered', image: '' },
+  ];
+}
+async function demoCall(path, { body = {} } = {}) {
+  await pause(path === '/auth/me' || path === '/auth/refresh' ? 120 : 850);
+  const ok = (identity) => ({ access_token: 'demo', expires_in: 0, identity });
+  switch (path) {
+    case '/auth/login': {
+      const e = String(body.email || '').toLowerCase();
+      if (e.includes('bloquead')) throw new AuthError(423, 'auth.account_locked');
+      if (e.includes('sinclave')) throw new AuthError(409, 'auth.password_not_set');
+      if (e.includes('error') || body.password === 'error') throw new AuthError(401, 'auth.invalid_credentials');
+      const id = { full_name: nameFromEmail(e), email: e, areas: ['account', 'purchases'] };
+      if (e.includes('2fa')) { demoPending = id; return { two_factor_required: true, ticket: 'demo' }; }
+      return ok(id);
+    }
+    case '/auth/2fa/verify':
+      if (String(body.code).trim() !== '123456' || !demoPending) throw new AuthError(422, 'auth.invalid_code', 'Ese código no es válido.');
+      return ok(demoPending);
+    case '/auth/register': {
+      const e = String(body.email || '').toLowerCase();
+      if (e.includes('existe')) throw new AuthError(409, 'auth.email_taken', 'Ya hay una cuenta con ese correo. Inicia sesión o recupera tu contraseña.');
+      return ok({ full_name: `${body.first_name} ${body.last_name}`.trim(), email: e, areas: ['account', 'purchases'] });
+    }
+    case '/auth/refresh': { const id = demoLoad(); if (!id) throw new AuthError(401, 'auth.no_session'); return ok(id); }
+    case '/auth/me': return identity;
+    case '/auth/logout': demoSave(null); return {};
+    case '/account-api/v1/orders': return { data: demoOrders(), next_cursor: '' };
+    default: throw new AuthError(404, 'demo.not_found');
+  }
+}
+
+async function call(path, opts = {}) {
+  if (DEMO) return demoCall(path, opts);
+  const { method = 'GET', body, params } = opts;
   let url = CONFIG.authBase + path;
   if (params) { const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v != null)); if ([...q].length) url += '?' + q; }
   const headers = { Accept: 'application/json', 'X-Tenant-Code': CONFIG.tenant };
@@ -56,6 +105,7 @@ function adopt(res) {
 function forget() { token = ''; clearTimeout(timer); timer = null; }
 
 async function loadMe(fallback) {
+  if (DEMO) { identity = fallback || demoLoad(); demoSave(identity); emit(); return identity; }
   try { const me = await call('/auth/me'); identity = (me && me.data) || me || fallback || null; }
   catch (e) { identity = fallback || null; }
   emit();
@@ -71,11 +121,12 @@ function renew() {
   return renewing;
 }
 
-const hasHint = () => /(?:^|;\s*)vexbiz_user_activa=1/.test(document.cookie);
+const hasHint = () => (DEMO ? !!demoLoad() : /(?:^|;\s*)vexbiz_user_activa=1/.test(document.cookie));
 
 let booting = null;
 export const auth = {
-  available: () => CONFIG.authBase !== null,
+  available: () => true,
+  demo: () => DEMO,
   user: () => identity,
   signedIn: () => !!identity && !!token,
   firstName() {
@@ -87,7 +138,7 @@ export const auth = {
   /* Al abrir la app: si el sitio dejó la pista de sesión, renueva y trae la identidad. */
   boot() {
     if (booting) return booting;
-    booting = (!auth.available() || !hasHint()) ? Promise.resolve(null)
+    booting = !hasHint() ? Promise.resolve(null)
       : call('/auth/refresh', { method: 'POST', body: {} }).then((res) => { adopt(res); return loadMe(res.identity); }).catch(() => { forget(); return null; });
     return booting;
   },
@@ -101,6 +152,14 @@ export const auth = {
   },
   async verify(ticket, code) {
     const res = await call('/auth/2fa/verify', { method: 'POST', body: { ticket, code } });
+    adopt(res); await loadMe(res.identity);
+    return { ok: true };
+  },
+  /* Alta de cuenta. En la app real el alta se hace en ve.vexbiz.com/register (endpoint no confirmado),
+     así que solo el modo demostración la resuelve aquí. */
+  async register(data) {
+    if (!DEMO) throw new AuthError(0, 'auth.register_on_site');
+    const res = await call('/auth/register', { method: 'POST', body: data });
     adopt(res); await loadMe(res.identity);
     return { ok: true };
   },
