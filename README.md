@@ -42,7 +42,7 @@ python3 tools/build_local.py
 
 Servida por http (`python3 -m http.server 8000` → `http://localhost:8000`) usa los módulos ES directamente y además se instala y funciona sin conexión (service worker).
 
-Los cambios de cada entrega están en `CAMBIOS.md`.
+Los cambios de cada entrega están en `CAMBIOS.md`. `acceso-demo.html` es una copia solo para visualización de Iniciar sesión y Crear cuenta, con todos sus estados y respuestas simuladas (se genera desde `tools/acceso-demo.template.html`).
 
 ## Cuenta real (iniciar sesión)
 
