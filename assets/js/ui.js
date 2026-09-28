@@ -48,9 +48,9 @@ export function pcard(p) {
       <span class="pcard__media">${p.images && p.images[0] ? img(p.images[0], '') : `<span class="pcard__noimg">${ico('image')}</span>`}</span>
       <span class="pcard__body"><span class="pcard__name">${esc(p.name)}</span>
         <span class="pcard__sku"${p.brand ? ' translate="no"' : ''}>${esc(p.brand || p.category || '')}</span>${stockLine(p)}</span>
-      <span class="pcard__foot"><span class="pcard-price${p.price > 0 ? '' : ' pcard-price--ask'}">${priceLabel(p)}</span>
-        <span class="pcard__store">${ico('shield')}<span translate="no">${esc(storeName(p))}</span></span></span>
-    </a></article>`;
+    </a>
+    <div class="pcard__foot"><button class="pcard-price${p.price > 0 ? '' : ' pcard-price--ask'}" type="button" data-quick="${esc(p.id)}" aria-haspopup="dialog" aria-label="Vista rápida de ${esc(p.name)}, ${esc(priceLabel(p))}">${priceLabel(p)}</button>
+      <span class="pcard__store">${ico('shield')}<span translate="no">${esc(storeName(p))}</span></span></div></article>`;
 }
 
 export function storeLogo(s, cls = 'store-card__logo') {
@@ -124,7 +124,8 @@ let io;
 export function reveal(root) {
   const items = root.querySelectorAll('.reveal:not(.is-visible)');
   if (reduce || !('IntersectionObserver' in window)) { items.forEach((i) => i.classList.add('is-visible')); return; }
-  io = io || new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } }), { threshold: 0.1 });
+  // Entrada escalonada: las tarjetas que aparecen juntas entran con 50 ms de diferencia (máx. 5 pasos)
+  io = io || new IntersectionObserver((es) => { let k = 0; es.forEach((e) => { if (e.isIntersecting) { e.target.style.setProperty('--d', Math.min(k++, 5) * 50 + 'ms'); e.target.classList.add('is-visible'); io.unobserve(e.target); } }); }, { threshold: 0.1 });
   items.forEach((i) => io.observe(i));
 }
 

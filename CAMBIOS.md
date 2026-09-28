@@ -2,6 +2,35 @@
 
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
+## 1.4.0 · 28/09 · Animaciones premium (tutoriales A1 a A8 de la guía del Home)
+
+Los ocho tutoriales de «Animaciones en el prototipo de Figma» de `GUIA HOME/guia-home-vexbiz.html`, llevados al código de la app con los tokens de movimiento (150 / 300 / 500 ms y las curvas estándar, entrada, salida y rebote). Con «reducir movimiento» activado en el sistema, todo queda quieto: sin autoplay, sin pausa, sin rebotes ni entradas escalonadas.
+
+- **A1 · Estados interactivos.**
+  - La línea de la tab de nicho crece de 20 % a 100 % y aparece (300 ms); al pasar el mouse asoma.
+  - Botones, tabs y el precio de la tarjeta se hunden al presionar (150 ms).
+- **A2 · Píldora de la tab bar.** Ya viajaba entre pestañas en 300 ms. Ahora el ícono también se hunde al tocarlo.
+- **A3 · Carrusel automático.**
+  - Cambia cada 4 s con un deslizamiento de 500 ms ease-in-out.
+  - Los puntos cambian de ancho al mismo tiempo.
+  - El bucle no rebobina: del tercer banner pasa al primero siguiendo hacia la derecha.
+  - Flechas del teclado para moverlo; botón de pausa.
+- **A4 · Carriles horizontales.** Sin cambios: ya tenían scroll-snap y asoma la tercera tarjeta.
+- **A5 · Buscador fijo arriba.** En Inicio, la barra con el buscador queda arriba al bajar y toma fondo translúcido, desenfoque y sombra al despegarse.
+- **A6 · Vista rápida.** Tocar el **precio** de cualquier tarjeta abre una hoja inferior con:
+  - foto, stock, marca, precio y tienda;
+  - cantidad limitada al stock;
+  - favorito;
+  - «Añadir al carrito», que pasa a «Añadido al carrito» 1,2 s y cierra la hoja;
+  - «Ver ficha completa».
+
+  La hoja sube en 500 ms, con fondo al 56 %, y su contenido entra un instante después. Tocar el resto de la tarjeta sigue abriendo la ficha.
+- **A7 · Contador del carrito.** Ya existía: el número de la tab bar rebota al añadir.
+- **A8 · Microinteracciones.**
+  - El corazón rebota al guardar un favorito, con el mismo keyframe del contador.
+  - El punto de stock bajo respira solo en la ficha y en la vista rápida (en las tarjetas sigue quieto, como pidió la auditoría).
+- **Extra.** Las tarjetas que aparecen juntas al hacer scroll entran escalonadas, con 50 ms entre una y otra.
+
 ## 1.3.1 · 28/09 · Barra de «Añadir al carrito» fija al pie
 
 - En la ficha de producto y en Entrega y pago, la barra con la cantidad y «Añadir al carrito» (o el total y «Confirmar pedido») queda siempre pegada al pie de la pantalla. Antes subía con el contenido al hacer scroll y tapaba la ficha.

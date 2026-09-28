@@ -159,7 +159,7 @@ fieldset.group { min-width: 0; }
 /* ---------- 5 · Cabecera de Inicio (Figma 292:800) ---------- */
 .hero {
   display: flex; flex-direction: column; gap: var(--vx-sp-3);
-  padding-top: calc(var(--vx-sp-5) + env(safe-area-inset-top, 0px));
+  padding-top: var(--vx-sp-2);
   background: linear-gradient(180deg, var(--app-hero) 18%, var(--app-bg) 82%);
 }
 .hero__bar { display: flex; align-items: center; gap: var(--vx-sp-3); padding-inline: var(--app-gutter); }
@@ -201,11 +201,12 @@ fieldset.group { min-width: 0; }
 }
 .niche::after {
   content: ""; position: absolute; left: 0; right: 0; bottom: 6px; height: 3px; border-radius: 2px;
-  background: var(--vx-text); transform: scaleX(0);
-  transition: transform var(--vx-dur) var(--vx-ease-standard);
+  background: var(--vx-text); transform: scaleX(0.2); opacity: 0;   /* A1: la línea crece de 20 % a 100 % y aparece */
+  transition: transform var(--vx-dur) var(--vx-ease-standard), opacity var(--vx-dur) var(--vx-ease-standard);
 }
 .niche[aria-selected="true"] { font-weight: 600; }
-.niche[aria-selected="true"]::after { transform: scaleX(1); }
+.niche[aria-selected="true"]::after { transform: scaleX(1); opacity: 1; }
+.niche:not([aria-selected="true"]):hover::after { transform: scaleX(0.4); opacity: 0.35; }
 
 /* Carrusel de banners (Figma 321:962) */
 .banners { display: flex; flex-direction: column; gap: var(--vx-sp-1); }
@@ -241,7 +242,7 @@ fieldset.group { min-width: 0; }
 .dot { width: var(--vx-tap); height: var(--vx-tap); display: grid; place-items: center; }
 .dot::before {
   content: ""; width: 6px; height: 6px; border-radius: var(--vx-r-pill); background: var(--vx-border-strong);
-  transition: width var(--vx-dur) var(--vx-ease-standard), background-color var(--vx-dur) var(--vx-ease-standard);
+  transition: width var(--vx-dur-slow) var(--vx-ease-standard), background-color var(--vx-dur-slow) var(--vx-ease-standard);   /* A3: a la par del deslizamiento */
 }
 .dot[aria-current="true"]::before { width: 18px; background: var(--vx-text); }
 
@@ -371,7 +372,7 @@ fieldset.group { min-width: 0; }
 
 /* Entrada de tarjetas al hacer scroll (IntersectionObserver). Reposo visible:
    la tarjeta nunca queda en opacidad 0 esperando al observador. */
-.reveal.is-visible { animation: card-in var(--vx-dur) var(--vx-ease-enter) both; }
+.reveal.is-visible { animation: card-in var(--vx-dur) var(--vx-ease-enter) both; animation-delay: var(--d, 0ms); }
 @keyframes card-in { from { opacity: 0; transform: translateY(8px); } }
 
 /* ---------- 9 · Estado vacío y chips ---------- */
@@ -784,3 +785,54 @@ a.row, button.row, .niche-row, .opt { transition: background-color var(--vx-dur-
 .toast__act::after { content: ""; position: absolute; inset: -6px 0; }
 .toast.has-action { display: flex; align-items: center; pointer-events: auto; }
 .screen--action > :nth-last-child(2) { margin-bottom: var(--vx-sp-6); }   /* aire antes de la barra al final del scroll */
+
+/* ---------- 19 · Movimiento premium (guía del Home, tutoriales A1 a A8) ---------- */
+/* A5 · Barra del buscador fija arriba: sobre la cabecera se funde con el ámbar; al despegarse toma fondo, desenfoque y sombra */
+.topdock {
+  position: sticky; top: 0; z-index: var(--vx-z-sticky);
+  padding: calc(var(--vx-sp-5) + env(safe-area-inset-top, 0px)) 0 var(--vx-sp-2);
+  background: var(--app-hero);
+  transition: background-color var(--vx-dur) var(--vx-ease-standard), box-shadow var(--vx-dur) var(--vx-ease-standard), padding var(--vx-dur) var(--vx-ease-standard);
+}
+.topdock[data-stuck] {
+  padding-top: calc(var(--vx-sp-3) + env(safe-area-inset-top, 0px));
+  background: color-mix(in srgb, var(--app-bg) 86%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 1px 0 var(--app-line), var(--vx-shadow-1);
+}
+.home > .topdock { margin-bottom: calc(var(--vx-sp-7) * -1); }
+
+/* A1 · Presionado: la tab y los íconos se hunden un poco (150 ms, curva estándar) */
+.tab:active .ico { transform: scale(0.9); }
+.tab--on:active .ico { transform: translateY(-1px) scale(0.9); }
+.tab .ico { transition: transform var(--vx-dur-fast) var(--vx-ease-standard); }
+.pcard-price:active { transform: scale(0.96); }
+.pcard-price { transition: background-color var(--vx-dur-fast) var(--vx-ease-standard), transform var(--vx-dur-fast) var(--vx-ease-standard); }
+
+/* A8 · Rebote del corazón al guardar (mismo keyframe que el badge del carrito) */
+.pcard-fav.is-pop .ico, .iconbtn.is-pop .ico { animation: pop var(--vx-dur) var(--vx-ease-bounce); }
+
+/* A8 · El punto de stock bajo respira solo en la ficha y en la vista rápida (una sola vez por pantalla) */
+.pd__badges .stock--low::before { animation: breathe 1.8s var(--vx-ease-standard) infinite; }
+@keyframes breathe { 50% { opacity: 0.35; transform: scale(0.8); } }
+@media (prefers-reduced-motion: reduce) { .pd__badges .stock--low::before { animation: none; } }
+
+/* A6 · Vista rápida */
+.pcard-price { font-family: inherit; cursor: pointer; }
+.quick__acts { display: flex; align-items: center; }
+.quick { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: var(--vx-sp-4); align-items: start; }
+.quick__media { aspect-ratio: 1 / 1; padding: var(--vx-sp-3); border-radius: var(--vx-r-lg); background: var(--app-media); display: grid; place-items: center; color: var(--vx-text-muted); }
+.quick__media img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+.quick__media .ico { width: 36px; height: 36px; }
+.quick__body { display: flex; flex-direction: column; gap: var(--vx-sp-2); min-width: 0; }
+.quick__name { margin: 0; font-size: var(--vx-fs-body); font-weight: 600; line-height: 1.3; text-wrap: pretty; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.quick__price { margin: 0; font-size: var(--vx-fs-h3); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.quick__store { margin: 0; display: flex; align-items: center; gap: 4px; font-size: var(--vx-fs-xs); color: var(--vx-text-muted); }
+.quick__store .ico { color: var(--vx-status-info-fg); }
+.quick__buy { display: flex; align-items: center; gap: var(--vx-sp-3); padding-top: var(--vx-sp-2); border-top: 1px solid var(--app-line); }
+.quick__buy .vx-btn { flex: 1; }
+.quick__buy .step { min-height: var(--vx-tap); }
+/* Contenido de la hoja: entra 60 ms detrás del panel, para que se lea el movimiento de abajo hacia arriba */
+.sheet > *:not(.sheet__grab) { animation: sheet-content var(--vx-dur-slow) var(--vx-ease-enter) both; animation-delay: 60ms; }
+@keyframes sheet-content { from { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: reduce) { .sheet > *:not(.sheet__grab) { animation: none; } }

@@ -47,12 +47,12 @@ export default {
     const banner = (tag, attrs, cls, kicker, title, sub, cta, artHtml) =>
       `<${tag} class="banner${cls}" ${attrs}><span class="banner__copy"><span class="banner__kicker">${kicker}</span><span class="banner__title">${title}</span><span class="banner__sub">${sub}</span><span class="banner__cta">${cta}${ico('chev-r')}</span></span>${artHtml}</${tag}>`;
     return `<div class="home">
-      <header class="hero">
-        <div class="hero__bar">
+      <div class="topdock" data-dock><div class="hero__bar">
           ${auth.signedIn() ? `<a class="avatar avatar--in" href="#/cuenta" aria-label="Hola, ${esc(auth.firstName())} · Mi cuenta">${esc(initials((auth.user() || {}).full_name || auth.firstName()))}</a>` : `<a class="avatar" href="${auth.available() ? '#/login?next=%23%2Finicio' : '#/cuenta'}" aria-label="${auth.available() ? 'Iniciar sesión' : 'Mi cuenta'}">${ico('user')}</a>`}
           <a class="searchfield" href="#/buscar">${ico('search')}<span>Buscar en <span translate="no">VEXBIZ</span>…</span></a>
           <a class="iconbtn" href="#/pedidos" aria-label="Mis pedidos">${ico('bell')}</a>
-        </div>
+        </div></div>
+      <header class="hero">
         ${auth.signedIn() ? `<p class="hero__hello">Hola, <b>${esc(auth.firstName())}</b></p>` : ''}<h1 class="sr" tabindex="-1" data-focus>Inicio</h1>
         <button class="loc" type="button" data-open="loc" aria-haspopup="dialog">${ico('pin', 'ico--sm')}<span>Enviar a <b data-city>${esc(prefs.city())}</b></span>${ico('chev-d', 'ico--xs')}</button>
         <div class="niches" role="tablist" aria-label="Nichos" data-niches>
@@ -114,19 +114,58 @@ export default {
     });
     const sel = tabs.querySelector('[aria-selected="true"]'); if (sel) sel.scrollIntoView({ inline: 'nearest', block: 'nearest' });
 
-    // Carrusel: scroll-snap, puntos y autoplay que se pausa al tocar (y no corre con reduced-motion)
-    const track = el.querySelector('[data-banners]'), dots = [...el.querySelectorAll('[data-dots] .dot')];
-    let cur = 0, auto;
-    const goB = (i) => { cur = (i + dots.length) % dots.length; track.scrollTo({ left: track.children[cur].offsetLeft - track.children[0].offsetLeft, behavior: reduce ? 'auto' : 'smooth' }); };
+    // Carrusel (guía del Home, tutorial A3): cambia cada 4000 ms con un deslizamiento de 500 ms
+    // ease-in-out, los puntos cambian de ancho a la vez y el bucle no rebobina: al final hay una
+    // copia del primer banner y desde ahí se salta sin animación al real.
+    const track = el.querySelector('[data-banners]'), dots = [...el.querySelectorAll('[data-dots] .dot')], N = dots.length;
+    const clone = track.children[0].cloneNode(true);
+    clone.setAttribute('aria-hidden', 'true'); clone.setAttribute('tabindex', '-1'); clone.inert = true;
+    clone.querySelectorAll('img').forEach((i) => { i.removeAttribute('fetchpriority'); i.alt = ''; });
+    track.appendChild(clone);
+    let cur = 0, auto, raf = 0, gliding = false;
+    const pos = (i) => track.children[i].offsetLeft - track.children[0].offsetLeft;
+    const setDot = (i) => { cur = i; dots.forEach((d, k) => (k === i ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current'))); };
+    const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    function glide(to, done) {
+      cancelAnimationFrame(raf);
+      const from = track.scrollLeft, dist = to - from;
+      if (reduce || Math.abs(dist) < 1) { track.scrollLeft = to; if (done) done(); return; }
+      gliding = true; track.style.scrollSnapType = 'none';
+      const t0 = performance.now(), D = 500;
+      const step = (now) => {
+        const t = Math.min(1, (now - t0) / D);
+        track.scrollLeft = from + dist * easeInOut(t);
+        if (t < 1) raf = requestAnimationFrame(step);
+        else { track.style.scrollSnapType = ''; gliding = false; if (done) done(); }
+      };
+      raf = requestAnimationFrame(step);
+    }
+    const goB = (i) => {
+      if (i >= N) { setDot(0); glide(pos(N), () => { track.scrollLeft = 0; }); return; }   // hacia la copia y salto invisible
+      const k = (i + N) % N; setDot(k); glide(pos(k));
+    };
+    let settle;
     track.addEventListener('scroll', () => {
+      if (gliding) return;
       const w = track.children[0].getBoundingClientRect().width + 12, i = Math.round(track.scrollLeft / w);
-      if (dots[i] && (i !== cur || !dots[i].hasAttribute('aria-current'))) { cur = i; dots.forEach((d, k) => (k === i ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current'))); }
+      if (i % N !== cur) setDot(i % N);
+      clearTimeout(settle);
+      settle = setTimeout(() => { if (!gliding && Math.round(track.scrollLeft / w) >= N) track.scrollLeft = 0; }, 140);   // deslizó a mano hasta la copia
     }, { passive: true });
     dots.forEach((d, k) => d.addEventListener('click', () => { goB(k); restart(); }));
+    track.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault(); goB(e.key === 'ArrowRight' ? cur + 1 : cur - 1); restart();
+    });
     let paused = false;
-    const restart = () => { clearInterval(auto); if (!reduce && !paused) auto = setInterval(() => { if (!track.contains(document.activeElement) && document.visibilityState === 'visible') goB(cur + 1); }, 4500); };
-    ['pointerdown', 'focusin', 'wheel'].forEach((ev) => track.addEventListener(ev, restart, { passive: true }));
+    const restart = () => { clearInterval(auto); if (!reduce && !paused) auto = setInterval(() => { if (!track.contains(document.activeElement) && document.visibilityState === 'visible') goB(cur + 1); }, 4000); };
+    ['pointerdown', 'focusin', 'wheel'].forEach((ev) => track.addEventListener(ev, () => { cancelAnimationFrame(raf); if (gliding) { gliding = false; track.style.scrollSnapType = ''; } restart(); }, { passive: true }));
     restart();
+
+    // Barra del buscador fija arriba al bajar (tutorial A5): toma fondo y sombra al despegarse
+    const dock = el.querySelector('[data-dock]'), scr = el.closest('.screen') || el;
+    const onScroll = () => dock.toggleAttribute('data-stuck', scr.scrollTop > 6);
+    scr.addEventListener('scroll', onScroll, { passive: true }); onScroll();
     // Banda Academia / Técnicos
     const bands = el.querySelectorAll('[data-ticker] .band'); let bi = 0;
     const ticker = el.querySelector('[data-ticker]');
@@ -147,6 +186,6 @@ export default {
       pb.querySelector('use').setAttribute('href', '#i-' + (paused ? 'play' : 'pause'));
       restart();
     });
-    ctx.onCleanup(() => { clearInterval(auto); clearInterval(tick); });
+    ctx.onCleanup(() => { clearInterval(auto); clearInterval(tick); cancelAnimationFrame(raf); scr.removeEventListener('scroll', onScroll); });
   },
 };

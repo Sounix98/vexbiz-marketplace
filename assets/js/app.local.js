@@ -450,9 +450,9 @@
       <span class="pcard__media">${p.images && p.images[0] ? img(p.images[0], "") : `<span class="pcard__noimg">${ico("image")}</span>`}</span>
       <span class="pcard__body"><span class="pcard__name">${esc(p.name)}</span>
         <span class="pcard__sku"${p.brand ? ' translate="no"' : ""}>${esc(p.brand || p.category || "")}</span>${stockLine(p)}</span>
-      <span class="pcard__foot"><span class="pcard-price${p.price > 0 ? "" : " pcard-price--ask"}">${priceLabel(p)}</span>
-        <span class="pcard__store">${ico("shield")}<span translate="no">${esc(storeName(p))}</span></span></span>
-    </a></article>`;
+    </a>
+    <div class="pcard__foot"><button class="pcard-price${p.price > 0 ? "" : " pcard-price--ask"}" type="button" data-quick="${esc(p.id)}" aria-haspopup="dialog" aria-label="Vista rápida de ${esc(p.name)}, ${esc(priceLabel(p))}">${priceLabel(p)}</button>
+      <span class="pcard__store">${ico("shield")}<span translate="no">${esc(storeName(p))}</span></span></div></article>`;
   }
   function storeLogo(s, cls = "store-card__logo") {
     return `<span class="${cls}" aria-hidden="true" data-initials="${esc(initials(s.name))}">${s.logo ? img(s.logo, "") : esc(initials(s.name))}</span>`;
@@ -520,12 +520,16 @@
       items.forEach((i) => i.classList.add("is-visible"));
       return;
     }
-    io = io || new IntersectionObserver((es) => es.forEach((e) => {
-      if (e.isIntersecting) {
-        e.target.classList.add("is-visible");
-        io.unobserve(e.target);
-      }
-    }), { threshold: 0.1 });
+    io = io || new IntersectionObserver((es) => {
+      let k = 0;
+      es.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.style.setProperty("--d", Math.min(k++, 5) * 50 + "ms");
+          e.target.classList.add("is-visible");
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
     items.forEach((i) => io.observe(i));
   }
   document.addEventListener("error", (e) => {
@@ -1054,12 +1058,12 @@
       };
       const banner = (tag, attrs, cls, kicker, title, sub, cta, artHtml) => `<${tag} class="banner${cls}" ${attrs}><span class="banner__copy"><span class="banner__kicker">${kicker}</span><span class="banner__title">${title}</span><span class="banner__sub">${sub}</span><span class="banner__cta">${cta}${ico("chev-r")}</span></span>${artHtml}</${tag}>`;
       return `<div class="home">
-      <header class="hero">
-        <div class="hero__bar">
+      <div class="topdock" data-dock><div class="hero__bar">
           ${auth.signedIn() ? `<a class="avatar avatar--in" href="#/cuenta" aria-label="Hola, ${esc(auth.firstName())} · Mi cuenta">${esc(initials((auth.user() || {}).full_name || auth.firstName()))}</a>` : `<a class="avatar" href="${auth.available() ? "#/login?next=%23%2Finicio" : "#/cuenta"}" aria-label="${auth.available() ? "Iniciar sesión" : "Mi cuenta"}">${ico("user")}</a>`}
           <a class="searchfield" href="#/buscar">${ico("search")}<span>Buscar en <span translate="no">VEXBIZ</span>…</span></a>
           <a class="iconbtn" href="#/pedidos" aria-label="Mis pedidos">${ico("bell")}</a>
-        </div>
+        </div></div>
+      <header class="hero">
         ${auth.signedIn() ? `<p class="hero__hello">Hola, <b>${esc(auth.firstName())}</b></p>` : ""}<h1 class="sr" tabindex="-1" data-focus>Inicio</h1>
         <button class="loc" type="button" data-open="loc" aria-haspopup="dialog">${ico("pin", "ico--sm")}<span>Enviar a <b data-city>${esc(prefs.city())}</b></span>${ico("chev-d", "ico--xs")}</button>
         <div class="niches" role="tablist" aria-label="Nichos" data-niches>
@@ -1124,32 +1128,98 @@
       });
       const sel = tabs.querySelector('[aria-selected="true"]');
       if (sel) sel.scrollIntoView({ inline: "nearest", block: "nearest" });
-      const track = el.querySelector("[data-banners]"), dots = [...el.querySelectorAll("[data-dots] .dot")];
-      let cur = 0, auto;
-      const goB = (i) => {
-        cur = (i + dots.length) % dots.length;
-        track.scrollTo({ left: track.children[cur].offsetLeft - track.children[0].offsetLeft, behavior: reduce ? "auto" : "smooth" });
+      const track = el.querySelector("[data-banners]"), dots = [...el.querySelectorAll("[data-dots] .dot")], N = dots.length;
+      const clone = track.children[0].cloneNode(true);
+      clone.setAttribute("aria-hidden", "true");
+      clone.setAttribute("tabindex", "-1");
+      clone.inert = true;
+      clone.querySelectorAll("img").forEach((i) => {
+        i.removeAttribute("fetchpriority");
+        i.alt = "";
+      });
+      track.appendChild(clone);
+      let cur = 0, auto, raf = 0, gliding = false;
+      const pos = (i) => track.children[i].offsetLeft - track.children[0].offsetLeft;
+      const setDot = (i) => {
+        cur = i;
+        dots.forEach((d, k) => k === i ? d.setAttribute("aria-current", "true") : d.removeAttribute("aria-current"));
       };
-      track.addEventListener("scroll", () => {
-        const w = track.children[0].getBoundingClientRect().width + 12, i = Math.round(track.scrollLeft / w);
-        if (dots[i] && (i !== cur || !dots[i].hasAttribute("aria-current"))) {
-          cur = i;
-          dots.forEach((d, k) => k === i ? d.setAttribute("aria-current", "true") : d.removeAttribute("aria-current"));
+      const easeInOut = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      function glide(to, done) {
+        cancelAnimationFrame(raf);
+        const from = track.scrollLeft, dist = to - from;
+        if (reduce || Math.abs(dist) < 1) {
+          track.scrollLeft = to;
+          if (done) done();
+          return;
         }
+        gliding = true;
+        track.style.scrollSnapType = "none";
+        const t0 = performance.now(), D = 500;
+        const step = (now) => {
+          const t = Math.min(1, (now - t0) / D);
+          track.scrollLeft = from + dist * easeInOut(t);
+          if (t < 1) raf = requestAnimationFrame(step);
+          else {
+            track.style.scrollSnapType = "";
+            gliding = false;
+            if (done) done();
+          }
+        };
+        raf = requestAnimationFrame(step);
+      }
+      const goB = (i) => {
+        if (i >= N) {
+          setDot(0);
+          glide(pos(N), () => {
+            track.scrollLeft = 0;
+          });
+          return;
+        }
+        const k = (i + N) % N;
+        setDot(k);
+        glide(pos(k));
+      };
+      let settle;
+      track.addEventListener("scroll", () => {
+        if (gliding) return;
+        const w = track.children[0].getBoundingClientRect().width + 12, i = Math.round(track.scrollLeft / w);
+        if (i % N !== cur) setDot(i % N);
+        clearTimeout(settle);
+        settle = setTimeout(() => {
+          if (!gliding && Math.round(track.scrollLeft / w) >= N) track.scrollLeft = 0;
+        }, 140);
       }, { passive: true });
       dots.forEach((d, k) => d.addEventListener("click", () => {
         goB(k);
         restart();
       }));
+      track.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        e.preventDefault();
+        goB(e.key === "ArrowRight" ? cur + 1 : cur - 1);
+        restart();
+      });
       let paused = false;
       const restart = () => {
         clearInterval(auto);
         if (!reduce && !paused) auto = setInterval(() => {
           if (!track.contains(document.activeElement) && document.visibilityState === "visible") goB(cur + 1);
-        }, 4500);
+        }, 4e3);
       };
-      ["pointerdown", "focusin", "wheel"].forEach((ev) => track.addEventListener(ev, restart, { passive: true }));
+      ["pointerdown", "focusin", "wheel"].forEach((ev) => track.addEventListener(ev, () => {
+        cancelAnimationFrame(raf);
+        if (gliding) {
+          gliding = false;
+          track.style.scrollSnapType = "";
+        }
+        restart();
+      }, { passive: true }));
       restart();
+      const dock = el.querySelector("[data-dock]"), scr = el.closest(".screen") || el;
+      const onScroll = () => dock.toggleAttribute("data-stuck", scr.scrollTop > 6);
+      scr.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
       const bands = el.querySelectorAll("[data-ticker] .band");
       let bi = 0;
       const ticker = el.querySelector("[data-ticker]");
@@ -1180,6 +1250,8 @@
       ctx.onCleanup(() => {
         clearInterval(auto);
         clearInterval(tick);
+        cancelAnimationFrame(raf);
+        scr.removeEventListener("scroll", onScroll);
       });
     }
   };
@@ -2033,6 +2105,57 @@
     }
   };
 
+  // assets/js/quick.js
+  async function quickView(id, from) {
+    const p = await api.product(id);
+    if (!p) {
+      nav.go("#/p/" + encodeURIComponent(id));
+      return;
+    }
+    const buy = canBuy(p), max = Math.max(1, Math.min(Number(p.stock) || 1, 99));
+    const sheet = openSheet(`
+    <div class="sheet__top"><h2 class="sheet__title" id="sheet-t">Vista rápida</h2>
+      <span class="quick__acts">${favBtn(p, "iconbtn")}<button class="iconbtn" type="button" data-close aria-label="Cerrar">${ico("x")}</button></span></div>
+    <div class="quick">
+      <span class="quick__media">${p.images && p.images[0] ? img(p.images[0], p.name, "", 320) : ico("image")}</span>
+      <div class="quick__body">
+        <div class="pd__badges">${stock(p, true)}</div>
+        ${p.brand ? `<span class="pd__brand" translate="no">${esc(p.brand)}</span>` : ""}
+        <p class="quick__name">${esc(p.name)}</p>
+        <p class="quick__price">${priceLabel(p)}</p>
+        <p class="quick__store">${ico("shield", "ico--xs")}Vende <b translate="no">${esc(storeName(p))}</b></p>
+      </div>
+    </div>
+    <div class="quick__buy">
+      ${buy ? `<div class="step" data-qstep data-max="${max}"><button type="button" data-dec aria-label="Quitar uno" disabled>${ico("minus", "ico--sm")}</button><output aria-label="Cantidad">1</output><button type="button" data-inc aria-label="Agregar uno"${max <= 1 ? " disabled" : ""}>${ico("plus", "ico--sm")}</button></div>
+        ${btn(ico("cart", "ico--sm") + "Añadir al carrito", "vx-btn--primary", "data-qadd data-autofocus")}` : btn(p.price > 0 ? "Agotado" : "Consultar precio a la tienda", "vx-btn--secondary", p.price > 0 ? "disabled" : `data-toast="Escríbele a ${esc(storeName(p))} desde su tienda en ve.vexbiz.com para pedir el precio"`)}
+    </div>
+    <a class="vx-btn vx-btn--ghost vx-btn--block" href="#/p/${esc(p.id)}" data-qfull><span class="vx-btn__label">Ver ficha completa${ico("chev-r", "ico--sm")}</span></a>`, from);
+    sheet.setAttribute("aria-labelledby", "sheet-t");
+    sheet.onclick = (e) => {
+      const st = e.target.closest("[data-qstep]"), b = e.target.closest("[data-inc],[data-dec]");
+      if (st && b) {
+        const out = st.querySelector("output"), m = +st.dataset.max, v = Math.max(1, Math.min(m, +out.textContent + (b.hasAttribute("data-inc") ? 1 : -1)));
+        out.textContent = v;
+        st.querySelector("[data-dec]").disabled = v <= 1;
+        st.querySelector("[data-inc]").disabled = v >= m;
+        return;
+      }
+      const add = e.target.closest("[data-qadd]");
+      if (add && !add.dataset.state) {
+        const q = +sheet.querySelector("[data-qstep] output").textContent;
+        const added = cart.add(p, q);
+        if (!added) {
+          toast("Ya tienes en el carrito todas las unidades disponibles");
+          return;
+        }
+        success(add, "Añadido al carrito", () => closeSheet());
+        return;
+      }
+      if (e.target.closest("[data-qfull]")) closeSheet();
+    };
+  }
+
   // assets/js/main.js
   CONFIG.version = document.documentElement.dataset.version || "1.0";
   var views = { inicio: home_default, categorias, n: nicho, p: product_default, s: tienda, tiendas, buscar, carrito, pago, pedido, pedidos, cuenta, favoritos, login, registro, error };
@@ -2073,6 +2196,12 @@
       else nav.go(h);
       return;
     }
+    const qv = e.target.closest("[data-quick]");
+    if (qv) {
+      e.preventDefault();
+      quickView(qv.dataset.quick, qv);
+      return;
+    }
     const fv = e.target.closest("[data-fav]");
     if (fv) {
       e.preventDefault();
@@ -2080,6 +2209,11 @@
       api.product(id).then((p) => {
         p = p || { id, name: fv.getAttribute("aria-label") || "", images: [] };
         const on = favs.toggle(p);
+        if (on && !reduce) {
+          fv.classList.remove("is-pop");
+          void fv.offsetWidth;
+          fv.classList.add("is-pop");
+        }
         document.querySelectorAll(`[data-fav="${CSS.escape(id)}"]`).forEach((b) => {
           b.setAttribute("aria-pressed", on);
           b.querySelector("use").setAttribute("href", "#i-" + (on ? "heart-f" : "heart"));

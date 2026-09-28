@@ -14,6 +14,7 @@ import { carrito, pago, pedido, pedidos } from './views/checkout.js';
 import { cuenta, favoritos, error } from './views/account.js';
 import { login, registro } from './views/login.js';
 import { auth } from './auth.js';
+import { quickView } from './quick.js';
 
 CONFIG.version = document.documentElement.dataset.version || '1.0';
 
@@ -39,6 +40,8 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-back]')) { nav.back(); return; }
   const tab = e.target.closest('[data-tab]');
   if (tab) { const h = '#/' + tab.dataset.tab; if (location.hash === h) host.firstChild && host.firstChild.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); else nav.go(h); return; }
+  const qv = e.target.closest('[data-quick]');
+  if (qv) { e.preventDefault(); quickView(qv.dataset.quick, qv); return; }
   const fv = e.target.closest('[data-fav]');
   if (fv) {
     e.preventDefault();
@@ -46,6 +49,7 @@ document.addEventListener('click', (e) => {
     api.product(id).then((p) => {
       p = p || { id, name: fv.getAttribute('aria-label') || '', images: [] };
       const on = favs.toggle(p);
+      if (on && !reduce) { fv.classList.remove('is-pop'); void fv.offsetWidth; fv.classList.add('is-pop'); }   // rebote del corazón (A8)
       document.querySelectorAll(`[data-fav="${CSS.escape(id)}"]`).forEach((b) => { b.setAttribute('aria-pressed', on); b.querySelector('use').setAttribute('href', '#i-' + (on ? 'heart-f' : 'heart')); });
       toast(on ? 'Guardado en favoritos' : 'Quitado de favoritos');
     });
