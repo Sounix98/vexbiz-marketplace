@@ -30,15 +30,19 @@ La API no envía cabeceras CORS: desde otro dominio (GitHub Pages, localhost) el
 2. `python3 tools/build_catalog.py catalog-raw.json` genera `data/catalog.json` (nombres en tipo oración, marcas y tiendas con mayúsculas correctas, índice de búsqueda sin acentos).
 3. Sube `VERSION` en `sw.js` para que los teléfonos instalados descarguen el catálogo nuevo.
 
-## Correr en local
+## Abrir en la computadora
 
-Los módulos ES y el service worker necesitan http, no `file://`:
+**Doble clic en `index.html`.** Abierta así (`file://`) la app carga la versión empaquetada: `assets/js/app.local.js` (todos los módulos en un script), `data/catalog.js` (el catálogo) y `assets/css/fonts.local.css` (fuentes incrustadas), porque Chrome y Edge bloquean módulos, `fetch` y fuentes en archivos locales. Carrito, favoritos y tema se guardan en el navegador. Sin conexión a internet no cargan las fotos de productos. Para verla como teléfono: F12 → ícono de dispositivo (Ctrl+Shift+M) → iPhone 12 Pro o 390 × 844.
+
+Después de cambiar cualquier `.js` o el catálogo, regenerar la versión empaquetada:
 
 ```
-python3 -m http.server 8000
+python3 tools/build_local.py
 ```
 
-y abre `http://localhost:8000`.
+Servida por http (`python3 -m http.server 8000` → `http://localhost:8000`) usa los módulos ES directamente y además se instala y funciona sin conexión (service worker).
+
+Los cambios de cada entrega están en `CAMBIOS.md`.
 
 ## Cuenta real (iniciar sesión)
 
@@ -62,7 +66,7 @@ assets/css/             tokens.css · fonts.css · app.css
 assets/js/              config · api · auth · store · router · ui · format · pwa · nav · main
 assets/js/views/        home · catalog · product · checkout · account · login
 data/catalog.json       snapshot normalizado
-tools/                  snapshot.js · build_catalog.py · cors-proxy.worker.js
+tools/                  build_local.py · snapshot.js · build_catalog.py · cors-proxy.worker.js
 ```
 
 ## Fuera de alcance en esta versión

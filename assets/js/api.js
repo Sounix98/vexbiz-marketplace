@@ -21,7 +21,10 @@ function indexSnapshot(c) {
 
 async function snapshot() {
   if (snap) return snap;
-  if (!loading) loading = fetch(CONFIG.snapshotUrl).then((r) => { if (!r.ok) throw new Error('snapshot ' + r.status); return r.json(); }).then(indexSnapshot).then((c) => (snap = c));
+  // Abierta con doble clic (file://): el catálogo llega ya cargado por data/catalog.js
+  const src = window.VX_CATALOG ? Promise.resolve(JSON.parse(JSON.stringify(window.VX_CATALOG)))
+    : fetch(CONFIG.snapshotUrl).then((r) => { if (!r.ok) throw new Error('snapshot ' + r.status); return r.json(); });
+  if (!loading) loading = src.then(indexSnapshot).then((c) => (snap = c));
   return loading;
 }
 
