@@ -1,11 +1,12 @@
 /* Cuenta · perfil, mis compras, preferencias (tema oscuro, ciudad), instalar la app,
    datos del catálogo. Favoritos. Vista de error. */
 import { api } from '../api.js';
-import { esc, plural, shortDate } from '../format.js';
+import { esc, plural, shortDate, initials } from '../format.js';
 import { ico, pcard, empty, topbar, rootHead, link, btn, toast } from '../ui.js';
 import { favs, orders, prefs } from '../store.js';
 import { CONFIG } from '../config.js';
 import { install } from '../pwa.js';
+import { auth } from '../auth.js';
 
 const row = (href, icon, title, sub, end = '', attrs = '') =>
   `<${href ? `a href="${href}"` : 'button type="button"'} class="row"${attrs}><span class="row__thumb row__thumb--ico">${ico(icon)}</span>
@@ -14,17 +15,28 @@ const row = (href, icon, title, sub, end = '', attrs = '') =>
 const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark' ||
   (!document.documentElement.getAttribute('data-theme') && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
 
+function profile() {
+  const u = auth.user();
+  if (auth.signedIn() && u) {
+    const name = u.full_name || u.name || '';
+    return `<div class="profile"><span class="profile__ava profile__ava--in" data-initials="${esc(initials(name || u.email))}">${u.avatar_url ? `<img src="${esc(u.avatar_url)}" alt="" referrerpolicy="no-referrer" data-fallback>` : esc(initials(name || u.email))}</span>
+      <span class="profile__body"><b>Hola, ${esc(auth.firstName())}</b><span>${esc(name || 'Tu cuenta VEXBIZ')}</span></span>
+      <button class="vx-btn" type="button" data-logout><span class="vx-btn__label">Salir</span></button></div>`;
+  }
+  return `<div class="profile"><span class="profile__ava">${ico('user')}</span><span class="profile__body"><b>Hola</b><span>${auth.available() ? 'Entra para ver tus compras de VEXBIZ.' : 'Tus pedidos y favoritos se guardan en este teléfono.'}</span></span>
+    <a class="vx-btn" href="#/login"><span class="vx-btn__label">Entrar</span></a></div>`;
+}
+
 export const cuenta = {
   title: () => 'Cuenta',
   async render() {
     const m = await api.meta();
     const canInstall = install.available();
     return rootHead('Cuenta') +
-      `<div class="profile"><span class="profile__ava">${ico('user')}</span><span class="profile__body"><b>Hola</b><span>Tus pedidos y favoritos se guardan en este teléfono.</span></span>
-        ${btn('Entrar', '', 'data-toast="El inicio de sesión con tu cuenta de ve.vexbiz.com llega en la próxima versión"')}</div>
-      ${canInstall ? `<div class="install" style="margin-top:16px" data-install-card><img class="install__ico" src="assets/icons/icon-192.png" alt="" width="44" height="44"><span class="install__body"><b>Instala VEXBIZ</b><span>Ábrela desde tu pantalla de inicio, también sin conexión.</span></span>${btn('Instalar', 'vx-btn--primary', 'data-install')}</div>` : ''}
+      profile() +
+      `      ${canInstall ? `<div class="install" style="margin-top:16px" data-install-card><img class="install__ico" src="assets/icons/icon-192.png" alt="" width="44" height="44"><span class="install__body"><b>Instala VEXBIZ</b><span>Ábrela desde tu pantalla de inicio, también sin conexión.</span></span>${btn('Instalar', 'vx-btn--primary', 'data-install')}</div>` : ''}
       <p class="label" style="padding:20px var(--app-gutter) 8px">Mis compras</p><div class="list">
-        ${row('#/pedidos', 'box', 'Mis pedidos', 'Estado y comprobante de pago', `<span class="count">${orders.list().length}</span>`)}
+        ${row('#/pedidos', 'box', 'Mis pedidos', auth.signedIn() ? 'Tus compras en VEXBIZ' : 'Estado y comprobante de pago', auth.signedIn() ? '' : `<span class="count">${orders.list().length}</span>`)}
         ${row('#/favoritos', 'heart', 'Favoritos', 'Productos guardados', `<span class="count">${favs.list().length}</span>`)}
         ${row('', 'pin', 'Mis direcciones', `<span data-city>${esc(prefs.city())}</span>`, '', ' data-open="loc"')}
       </div>
@@ -43,6 +55,8 @@ export const cuenta = {
       <p class="foot-note">VEXBIZ · app móvil · versión ${esc(CONFIG.version || '1.0')}</p>`;
   },
   mount(el, _p, _q, ctx) {
+    const lo = el.querySelector('[data-logout]');
+    if (lo) lo.addEventListener('click', async () => { lo.dataset.state = 'sending'; await auth.logout(); toast('Cerraste sesión en este teléfono'); });
     const t = el.querySelector('[data-theme-toggle]');
     t.addEventListener('click', () => {
       const next = t.getAttribute('aria-checked') === 'true' ? 'light' : 'dark';

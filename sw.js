@@ -3,8 +3,9 @@
    - Catálogo (data/catalog.json): se muestra lo guardado y se actualiza por detrás.
    - Fotos de productos (storage.vexbiz.com): primero caché, tope de 400 imágenes.
    - API en vivo (marketplace-api): primero red, caché si no hay conexión.
+   - Cuenta (/auth, /account-api, cualquier pedido con Authorization): nunca pasa por la caché.
    Subir VERSION en cada entrega para que los teléfonos reciban la versión nueva. */
-const VERSION = 'vx-1.0.0';
+const VERSION = 'vx-1.1.0';
 const SHELL = `${VERSION}-shell`, DATA = `${VERSION}-data`, IMG = 'vx-img', API = 'vx-api';
 const PRECACHE = [
   './',
@@ -33,6 +34,7 @@ const PRECACHE = [
   'assets/img/logo-oscuro.webp',
   'assets/img/prov-refrihogar.webp',
   'assets/js/api.js',
+  'assets/js/auth.js',
   'assets/js/config.js',
   'assets/js/format.js',
   'assets/js/main.js',
@@ -45,6 +47,7 @@ const PRECACHE = [
   'assets/js/views/catalog.js',
   'assets/js/views/checkout.js',
   'assets/js/views/home.js',
+  'assets/js/views/login.js',
   'assets/js/views/product.js'
 ];
 
@@ -67,6 +70,7 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (req.headers.has('Authorization') || /\/(auth|account-api|payments-api)\//.test(url.pathname)) return;   // datos de la cuenta: siempre red, nunca caché
 
   if (url.hostname === 'storage.vexbiz.com') {                     // fotos
     e.respondWith(caches.open(IMG).then(async (c) => {

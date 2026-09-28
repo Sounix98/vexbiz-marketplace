@@ -3,9 +3,10 @@
    proveedores certificados → explora por interés → marcas → confianza. */
 import { api } from '../api.js';
 import { CONFIG } from '../config.js';
-import { esc, plural } from '../format.js';
+import { esc, plural, initials } from '../format.js';
 import { ico, pcard, provCard, empty, btn, reveal, reduce, storeOf } from '../ui.js';
 import { prefs } from '../store.js';
+import { auth } from '../auth.js';
 
 let selected = 'todo';
 const TRUST_ICON = { truck: 'truck', returns: 'swap', shield: 'shield', headset: 'help' };
@@ -39,11 +40,11 @@ export default {
     return `<div class="home">
       <header class="hero">
         <div class="hero__bar">
-          <a class="avatar" href="#/cuenta" aria-label="Mi cuenta">${ico('user')}</a>
+          ${auth.signedIn() ? `<a class="avatar avatar--in" href="#/cuenta" aria-label="Hola, ${esc(auth.firstName())} · Mi cuenta">${esc(initials((auth.user() || {}).full_name || auth.firstName()))}</a>` : `<a class="avatar" href="${auth.available() ? '#/login?next=%23%2Finicio' : '#/cuenta'}" aria-label="${auth.available() ? 'Iniciar sesión' : 'Mi cuenta'}">${ico('user')}</a>`}
           <a class="searchfield" href="#/buscar">${ico('search')}<span>Buscar en Vexbiz</span></a>
           <a class="iconbtn" href="#/pedidos" aria-label="Mis pedidos">${ico('bell')}</a>
         </div>
-        <h1 class="sr" tabindex="-1" data-focus>Inicio</h1>
+        ${auth.signedIn() ? `<p class="hero__hello">Hola, <b>${esc(auth.firstName())}</b></p>` : ''}<h1 class="sr" tabindex="-1" data-focus>Inicio</h1>
         <button class="loc" type="button" data-open="loc" aria-haspopup="dialog">${ico('pin', 'ico--sm')}<span>Enviar a <b data-city>${esc(prefs.city())}</b></span>${ico('chev-d', 'ico--xs')}</button>
         <div class="niches" role="tablist" aria-label="Nichos" data-niches>
           ${tabs.map((id) => `<button class="niche" role="tab" type="button" data-niche="${id}" aria-selected="${selected === id}" tabindex="${selected === id ? 0 : -1}">${id === 'todo' ? 'Todo' : esc(map.get(id).name)}</button>`).join('')}

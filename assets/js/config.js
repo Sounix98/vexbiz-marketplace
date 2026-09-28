@@ -11,6 +11,10 @@ const params = new URLSearchParams(location.search);
 export const CONFIG = {
   tenant: 'vepr',                                   // código de país que resuelve ve.vexbiz.com
   apiBase: params.get('api') || (onVexbiz ? '/marketplace-api/v1' : ''),
+  // Cuenta real (/auth, /account-api): solo en el mismo origen que la cookie de sesión.
+  // null = no disponible aquí. ?auth=<origen> permite probar detrás de un proxy del mismo sitio.
+  authBase: onVexbiz ? '' : (params.has('auth') ? params.get('auth') : null),
+  siteUrl: 'https://ve.vexbiz.com',
   snapshotUrl: 'data/catalog.json',
   pageSize: 24,
   currency: 'USD',

@@ -111,7 +111,7 @@ document.addEventListener('error', (e) => {
   const t = e.target;
   if (t.tagName === 'IMG' && t.hasAttribute('data-fallback') && !t.dataset.broken) {
     t.dataset.broken = '1';
-    const box = t.closest('.pcard__media, .row__thumb, .pd-media, .store-card__logo, .prov__logo, .niche-row__ico');
+    const box = t.closest('.pcard__media, .row__thumb, .pd-media, .store-card__logo, .prov__logo, .niche-row__ico, .profile__ava, .order-thumb');
     if (!box) return;
     if (box.dataset.initials) { box.insertAdjacentText('beforeend', box.dataset.initials); return; }   // logo de tienda: iniciales
     if (box.classList.contains('prov__logo')) { box.classList.add('prov__mono'); box.textContent = (box.closest('.prov').querySelector('.prov__name') || {}).textContent?.slice(0, 2).toUpperCase() || ''; return; }

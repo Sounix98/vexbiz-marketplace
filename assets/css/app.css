@@ -647,3 +647,46 @@ img[data-broken] { display: none !important; }
 .pcard__noimg .ico { width: 36px; height: 36px; }
 .pcard-price--ask { font-size: var(--vx-fs-sm); }
 .store-card__logo--lg { width: 88px; height: 88px; font-size: 1.75rem; box-shadow: 0 0 0 4px rgba(255,255,255,.12); }
+
+/* ---------- 16 · Iniciar sesión (cuenta real de ve.vexbiz.com) ---------- */
+.auth { padding: var(--vx-sp-5) var(--app-gutter) var(--vx-sp-8); display: flex; flex-direction: column; gap: var(--vx-sp-5); }
+.auth__card { padding: var(--vx-sp-5); border-radius: var(--vx-r-xl); background: var(--app-card); border: 1px solid var(--app-line); box-shadow: var(--vx-shadow-1); display: flex; flex-direction: column; gap: var(--vx-sp-4); }
+.auth__head { display: flex; align-items: center; gap: var(--vx-sp-3); }
+.auth__badge { width: 48px; height: 48px; flex: none; border-radius: var(--vx-r-lg); display: grid; place-items: center; background: var(--vx-accent-soft); color: var(--vx-accent-text); }
+.auth__badge .ico { width: 24px; height: 24px; }
+.auth__head h1 { margin: 0; font-size: var(--vx-fs-h3); line-height: var(--vx-lh-snug); letter-spacing: var(--vx-ls-heading); }
+.auth__head p { margin: 2px 0 0; font-size: var(--vx-fs-sm); color: var(--vx-text-muted); }
+.auth form { display: flex; flex-direction: column; gap: var(--vx-sp-4); }
+.fld { display: flex; flex-direction: column; gap: var(--vx-sp-1); }
+.fld__top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--vx-sp-2); }
+.fld label { font-size: var(--vx-fs-sm); font-weight: 600; }
+.fld__box {
+  display: flex; align-items: center; gap: var(--vx-sp-2); min-height: 48px; padding-inline: var(--vx-sp-3) var(--vx-sp-1);
+  border-radius: var(--vx-r-md); border: 1px solid var(--vx-border-strong); background: var(--vx-surface);
+  transition: border-color var(--vx-dur-fast) var(--vx-ease-standard), box-shadow var(--vx-dur-fast) var(--vx-ease-standard);
+}
+.fld__box > .ico { width: 20px; height: 20px; color: var(--vx-text-muted); flex: none; }
+.fld__box:focus-within { border-color: var(--vx-focus); box-shadow: 0 0 0 3px var(--vx-focus-halo); }
+.fld__box input { flex: 1; min-width: 0; height: 46px; border: 0; outline: 0; background: none; font-size: var(--vx-fs-body); color: var(--vx-text); }
+.fld__box input::placeholder { color: var(--vx-text-muted); }
+.fld__box .iconbtn { width: var(--vx-tap); height: var(--vx-tap); }
+.fld--bad .fld__box { border-color: var(--vx-status-danger-bd); }
+.fld__code input { letter-spacing: 0.35em; font-family: var(--vx-font-mono); font-variant-numeric: tabular-nums; }
+.textlink { display: inline-flex; align-items: center; min-height: var(--vx-tap); font-size: var(--vx-fs-sm); font-weight: 600; color: var(--vx-text); text-decoration: underline; text-underline-offset: 3px; }
+.auth__alt { margin: 0; text-align: center; font-size: var(--vx-fs-sm); color: var(--vx-text-muted); }
+.msg { display: flex; gap: var(--vx-sp-2); align-items: flex-start; padding: var(--vx-sp-3); border-radius: var(--vx-r-md); border: 1px solid; font-size: var(--vx-fs-sm); }
+.msg .ico { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+.msg--danger { color: var(--vx-status-danger-fg); background: var(--vx-status-danger-bg); border-color: var(--vx-status-danger-bd); }
+.msg--info { color: var(--vx-status-info-fg); background: var(--vx-status-info-bg); border-color: var(--vx-status-info-bd); }
+.msg[hidden] { display: none; }
+.auth__safe { display: flex; gap: var(--vx-sp-2); align-items: flex-start; font-size: var(--vx-fs-xs); color: var(--vx-text-muted); }
+.auth__safe .ico { width: 16px; height: 16px; flex: none; margin-top: 1px; }
+.profile__ava img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.profile__ava--in { font-weight: 700; font-size: var(--vx-fs-h4); }
+.order-thumb { overflow: hidden; }
+.order-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.vx-status--danger { color: var(--vx-status-danger-fg); background: var(--vx-status-danger-bg); border-color: var(--vx-status-danger-bd); }
+.pager { display: flex; justify-content: center; padding: var(--vx-sp-4) var(--app-gutter); }
+.avatar--in { background: var(--vx-n-800); color: var(--vx-n-0); font-weight: 700; font-size: var(--vx-fs-sm); }
+.hero__hello { margin: 0; padding-inline: var(--app-gutter); font-size: var(--vx-fs-body); }
+.hero__hello b { font-weight: 700; }

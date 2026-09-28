@@ -5,6 +5,8 @@ import { esc, money, plural, shortDate } from '../format.js';
 import { ico, img, empty, topbar, rootHead, link, btn, success, storeOf, toast, reduce } from '../ui.js';
 import { cart, orders, prefs } from '../store.js';
 import { nav } from '../nav.js';
+import { CONFIG } from '../config.js';
+import { auth, STATUS, STATUS_TONE } from '../auth.js';
 
 const sname = (id) => (storeOf(id) || {}).name || 'Tienda';
 const thumb = (l) => `<a class="row__thumb" href="#/p/${esc(l.id)}" aria-label="${esc(l.name)}">${l.img ? img(l.img, '') : ico('image')}</a>`;
@@ -98,14 +100,55 @@ export const pedido = {
 };
 
 const PAY = { pagomovil: 'Pago móvil', divisas: 'Transferencia en divisas', efectivo: 'Efectivo al retirar' };
-export const pedidos = {
-  title: () => 'Mis pedidos',
-  render() {
-    const list = orders.list();
-    if (!list.length) return topbar('Mis pedidos') + empty('box', 'Aún no tienes pedidos', 'Cuando compres, aquí verás cada pedido con su estado y el comprobante de pago.', link('Explorar productos', '#/inicio'));
-    return topbar('Mis pedidos') + `<div class="list">${list.map((o) => `<div class="row" style="align-items:flex-start"><span class="row__thumb row__thumb--ico">${ico('box')}</span>
+const localRows = (list) => `<div class="list">${list.map((o) => `<div class="row" style="align-items:flex-start"><span class="row__thumb row__thumb--ico">${ico('box')}</span>
       <span class="row__body"><span class="row__title">Pedido #${esc(o.code)}</span>
       <span class="row__sub">${plural(o.items, 'artículo', 'artículos')} · ${plural(o.stores, 'tienda', 'tiendas')} · ${shortDate(o.date)}${o.pay ? ' · ' + PAY[o.pay] : ''}</span>
       <span class="vx-status vx-status--info" style="margin-top:6px">${ico('clock')}Esperando verificación del pago</span></span><span class="row__end">${money(o.total)}</span></div>`).join('')}</div>`;
+
+/* Compra real de la cuenta (GET /account-api/v1/orders). El detalle y el pago siguen en el sitio. */
+const realRow = (o) => {
+  const left = auth.leftToPay(o), tone = STATUS_TONE[o.status] || 'neutral';
+  return `<a class="row" style="align-items:flex-start" href="${CONFIG.siteUrl}/order/${encodeURIComponent(o.order_number)}" target="_blank" rel="noopener">
+    <span class="row__thumb order-thumb${o.image ? '' : ' row__thumb--ico'}">${o.image ? img(o.image, '') : ico('box')}</span>
+    <span class="row__body"><span class="row__title">Pedido #${esc(o.order_number)}</span>
+      <span class="row__sub">${[o.store_name, o.item_count ? plural(o.item_count, 'artículo', 'artículos') : '', o.created_at ? shortDate(o.created_at) : ''].filter(Boolean).map(esc).join(' · ')}</span>
+      <span class="vx-status vx-status--${tone}" style="margin-top:6px">${esc(STATUS[o.status] || o.status || 'En proceso')}</span>
+      ${left > 0 ? `<span class="row__sub" style="margin-top:4px">Falta pagar <b>${money(left, o.currency || CONFIG.currency)}</b></span>` : ''}</span>
+    <span class="row__end">${money(o.total || 0, o.currency || CONFIG.currency)}</span></a>`;
+};
+
+export const pedidos = {
+  title: () => 'Mis pedidos',
+  async render() {
+    const list = orders.list();
+    if (auth.signedIn()) {
+      let block;
+      try {
+        const r = await auth.orders('', 10);
+        block = r.items.length
+          ? `<div class="list" data-real>${r.items.map(realRow).join('')}</div>${r.next ? `<div class="pager">${btn('Ver más pedidos', 'vx-btn--secondary', `data-more="${esc(r.next)}"`)}</div>` : ''}`
+          : empty('box', 'Todavía no tienes compras registradas', 'Cuando compres con tu cuenta, aquí verás cada pedido con su estado.', link('Explorar productos', '#/inicio'));
+      } catch (e) {
+        block = `<div class="msg msg--danger" role="alert" style="margin:0 var(--app-gutter)">${ico('alert')}<span>No pudimos traer tus compras de VEXBIZ. Revisa tu conexión y vuelve a intentarlo.</span></div>`;
+      }
+      return topbar('Mis pedidos') + `<p class="sec__meta" style="padding-bottom:12px">Compras de ${esc(auth.firstName())} en VEXBIZ · toca un pedido para ver el detalle y pagar</p>${block}` +
+        (list.length ? `<p class="label" style="padding:20px var(--app-gutter) 8px">Hechos en esta app</p>${localRows(list)}` : '');
+    }
+    if (!list.length) return topbar('Mis pedidos') + empty('box', 'Aún no tienes pedidos', 'Cuando compres, aquí verás cada pedido con su estado y el comprobante de pago.', link('Explorar productos', '#/inicio')) + signinHint();
+    return topbar('Mis pedidos') + localRows(list) + signinHint();
+  },
+  mount(el) {
+    el.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-more]');
+      if (!b || b.dataset.state) return;
+      b.dataset.state = 'sending';
+      try {
+        const r = await auth.orders(b.dataset.more, 10);
+        el.querySelector('[data-real]').insertAdjacentHTML('beforeend', r.items.map(realRow).join(''));
+        if (r.next) { b.dataset.more = r.next; b.removeAttribute('data-state'); } else b.closest('.pager').remove();
+      } catch (err) { b.removeAttribute('data-state'); toast('No pudimos traer más pedidos. Inténtalo otra vez.'); }
+    });
   },
 };
+
+const signinHint = () => (auth.available() ? `<p class="auth__alt" style="padding:16px var(--app-gutter)">¿Compraste en ve.vexbiz.com? <a class="textlink" href="#/login?next=%23%2Fpedidos">Entra para ver esas compras</a></p>` : '');

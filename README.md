@@ -11,7 +11,7 @@ App móvil del marketplace VEXBIZ en HTML, CSS y JavaScript vanilla, sin framewo
 
 ## Pantallas
 
-Inicio · Categorías (11 nichos) · Nicho (portada, categorías, orden, paginación) · Ficha (fotos, precio, stock, tiendas que lo venden, características, descripción, más de la tienda, relacionados) · Tienda · Tiendas · Buscar (en vivo, recientes) · Carrito por tienda · Entrega y pago por tienda · Pedido recibido · Mis pedidos · Favoritos · Cuenta (tema oscuro, ciudad, instalar, datos del catálogo).
+Inicio · Categorías (11 nichos) · Nicho (portada, categorías, orden, paginación) · Ficha (fotos, precio, stock, tiendas que lo venden, características, descripción, más de la tienda, relacionados) · Tienda · Tiendas · Buscar (en vivo, recientes) · Carrito por tienda · Entrega y pago por tienda · Pedido recibido · Mis pedidos (compras reales de la cuenta + pedidos hechos en la app) · Favoritos · Cuenta (sesión, tema oscuro, ciudad, instalar, datos del catálogo) · Iniciar sesión (correo y contraseña, verificación en dos pasos).
 
 ## Datos
 
@@ -40,6 +40,14 @@ python3 -m http.server 8000
 
 y abre `http://localhost:8000`.
 
+## Cuenta real (iniciar sesión)
+
+`assets/js/auth.js` usa el mismo contrato que ve.vexbiz.com (leído de sus bundles el 28/09): `POST /auth/login` → si la cuenta tiene verificación en dos pasos, `POST /auth/2fa/verify` con el ticket y el código; después `GET /auth/me` (nombre, correo, foto). La sesión se renueva sola con `POST /auth/refresh` 60 s antes de que venza el token, y al abrir la app se recupera si el sitio dejó la cookie `vexbiz_user_activa=1`. «Salir» llama a `POST /auth/logout`. Mis pedidos lee `GET /account-api/v1/orders` (paginado por cursor) y cada pedido abre su detalle y pago en ve.vexbiz.com. Todas las llamadas llevan `X-Tenant-Code: vepr`.
+
+- El token de acceso vive solo en memoria; la app nunca guarda la contraseña ni el token en el teléfono. El service worker no cachea nada de `/auth`, `/account-api` ni pedidos con `Authorization`.
+- **Solo funciona servida desde un dominio de vexbiz.com** (por ejemplo `app.vexbiz.com` o `ve.vexbiz.com/app/`): la renovación depende de la cookie httpOnly del dominio y la API no acepta llamadas de otros orígenes. En GitHub Pages o en local la pantalla «Iniciar sesión» lo explica y ofrece entrar en ve.vexbiz.com.
+- Para probar detrás de un proxy del mismo sitio: abrir con `?auth=<origen>` (vacío = mismo origen). Los textos de error son los del sitio (correo o contraseña incorrectos, cuenta bloqueada, contraseña sin crear, cuenta sin acceso a Venezuela, sin conexión).
+
 ## Publicar
 
 Es un sitio estático: GitHub Pages (rama `main`, carpeta raíz, con `.nojekyll`), Cloudflare Pages o cualquier hosting. Las rutas usan hash (`#/p/<id>`), así que no hace falta reescribir URLs en el servidor.
@@ -51,12 +59,12 @@ index.html              casco: sprite de íconos, tab bar, hoja inferior, aviso
 manifest.webmanifest    instalación (nombre, íconos, accesos directos)
 sw.js                   offline: casco, catálogo, fotos, API
 assets/css/             tokens.css · fonts.css · app.css
-assets/js/              config · api · store · router · ui · format · pwa · nav · main
-assets/js/views/        home · catalog · product · checkout · account
+assets/js/              config · api · auth · store · router · ui · format · pwa · nav · main
+assets/js/views/        home · catalog · product · checkout · account · login
 data/catalog.json       snapshot normalizado
 tools/                  snapshot.js · build_catalog.py · cors-proxy.worker.js
 ```
 
 ## Fuera de alcance en esta versión
 
-Inicio de sesión con la cuenta de ve.vexbiz.com, pago real (el pedido queda guardado en el teléfono), seguimiento del envío, mensajería con la tienda y servicios especializados (Academia, Técnicos, Auxilio vial, Seguros), que abren un aviso.
+Registro y recuperación de contraseña (abren ve.vexbiz.com), pago dentro de la app (los pedidos hechos aquí quedan en el teléfono; los de la cuenta se pagan en el sitio), seguimiento del envío, mensajería con la tienda y servicios especializados (Academia, Técnicos, Auxilio vial, Seguros), que abren un aviso.

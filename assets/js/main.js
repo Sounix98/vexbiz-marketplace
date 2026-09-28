@@ -12,10 +12,12 @@ import product from './views/product.js';
 import { categorias, nicho, tiendas, tienda, buscar } from './views/catalog.js';
 import { carrito, pago, pedido, pedidos } from './views/checkout.js';
 import { cuenta, favoritos, error } from './views/account.js';
+import { login } from './views/login.js';
+import { auth } from './auth.js';
 
 CONFIG.version = document.documentElement.dataset.version || '1.0';
 
-const views = { inicio: home, categorias, n: nicho, p: product, s: tienda, tiendas, buscar, carrito, pago, pedido, pedidos, cuenta, favoritos, error };
+const views = { inicio: home, categorias, n: nicho, p: product, s: tienda, tiendas, buscar, carrito, pago, pedido, pedidos, cuenta, favoritos, login, error };
 const app = document.querySelector('[data-app]'), bar = document.querySelector('[data-tabbar]'), host = document.getElementById('screen-host');
 
 /* Badge del carrito en la tab bar */
@@ -85,6 +87,9 @@ document.addEventListener('keydown', (e) => {
   nav.go = router.go; nav.back = router.back; nav.rerender = router.rerender;
   router.start();
   badge(false);
+  // Sesión real: si el sitio dejó sesión abierta, se recupera y la pantalla actual se actualiza
+  auth.subscribe(() => { if (!/^#\/login/.test(location.hash)) router.rerender(); });
+  auth.boot();
   registerSW();
   watchNetwork();
 })();
