@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FFD85E" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E262A" media="(prefers-color-scheme: dark)">
+<title>VEXBIZ · Acceso (demo)</title>
+<link rel="icon" href="assets/icons/favicon-64.png">
+<!-- Copia SOLO PARA VISUALIZACIÓN de Iniciar sesión y Crear cuenta. No se conecta a ninguna API:
+     todas las respuestas son simuladas en esta página. Generada por tools/build_local.py desde
+     tools/acceso-demo.template.html (el sprite de íconos se copia de index.html). -->
+<link rel="stylesheet" href="assets/css/fonts.local.css">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/app.css">
+<style>
+  /* Barra de la demo: fuera del diseño de la app, solo para moverse entre estados */
+  .demo { position: sticky; top: 0; z-index: calc(var(--vx-z-sticky) + 1); display: flex; flex-direction: column; gap: var(--vx-sp-2); padding: var(--vx-sp-2) var(--app-gutter) var(--vx-sp-3); background: var(--vx-n-800); color: var(--vx-n-0); }
+  .demo__top { display: flex; align-items: center; gap: var(--vx-sp-2); }
+  .demo__tag { flex: 1; min-width: 0; font-size: var(--vx-fs-xs); font-weight: 700; letter-spacing: var(--vx-ls-caps); text-transform: uppercase; color: var(--vx-n-200); }
+  .demo select { width: 100%; height: var(--vx-tap); padding-inline: var(--vx-sp-3); border-radius: var(--vx-r-md); border: 1px solid var(--vx-n-600); background: var(--vx-n-900); color: var(--vx-n-0); font: inherit; font-size: var(--vx-fs-body); }
+  .demo__theme { height: var(--vx-tap); padding-inline: var(--vx-sp-3); border-radius: var(--vx-r-md); border: 1px solid var(--vx-n-600); color: var(--vx-n-0); font-size: var(--vx-fs-sm); font-weight: 600; display: inline-flex; align-items: center; gap: var(--vx-sp-1); }
+  .demo__theme .ico { width: 18px; height: 18px; }
+  .demo__hint { margin: 0; font-size: var(--vx-fs-xs); color: var(--vx-n-200); }
+  .demo-screen { padding-bottom: var(--vx-sp-8); }
+  .demo-screen .topbar { top: 0; position: relative; }
+  .app .toast { bottom: calc(var(--vx-sp-6) + env(safe-area-inset-bottom, 0px)); }
+</style>
+<script>try{var t=localStorage.getItem('vx-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<defs>
+  <g id="i-base" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></g>
+</defs>
+<symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+<symbol id="i-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L20.5 8H6"/><circle cx="10" cy="20" r="1.4"/><circle cx="17.5" cy="20" r="1.4"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 7.8a4.1 4.1 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20Z"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-store" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5 5 4.5h14l1.5 5"/><path d="M4.5 9.5v10h15v-10"/><path d="M9 19.5v-5h6v5"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.7 2.7L16 9.5"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 5 6v6c0 4.2 3 7.3 7 8.5 4-1.2 7-4.3 7-8.5V6l-7-2.5Z"/><path d="m9 12 2.2 2.2L15.2 10"/></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5h10v9h-10z"/><path d="M12.5 10h4l3 3v2.5h-7z"/><circle cx="6.5" cy="18" r="1.6"/><circle cx="16.5" cy="18" r="1.6"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 20 7v10l-8 3.8L4 17V7l8-3.8Z"/><path d="M4 7l8 3.8L20 7M12 10.8V20.8"/></symbol>
+<symbol id="i-tools" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a3.5 3.5 0 0 0 4.6 4.6L21 13l-8 8-2-2"/><path d="M9.5 4 4 9.5l3 3 2.5-2.5 3 3"/></symbol>
+<symbol id="i-snow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 15v-2.4L5.6 8h12.8l2.1 4.6V15"/><path d="M3.5 15h17"/><circle cx="7.2" cy="17" r="1.6"/><circle cx="16.8" cy="17" r="1.6"/></symbol>
+<symbol id="i-moto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="16.5" r="3"/><circle cx="19" cy="16.5" r="3"/><path d="M8 16.5h5l3-6h3M10 10.5h4"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3 6 13.5h5L10 21l7.5-10.5h-5L13.5 3Z"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s6.5-6 6.5-10.5a6.5 6.5 0 1 0-13 0C5.5 15 12 21 12 21Z"/><circle cx="12" cy="10.3" r="2.4"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.9" r=".9" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.8 20h18.4L12 4Z"/><path d="M12 10v4.4"/><circle cx="12" cy="17.2" r=".9" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.2"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-chev-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 5.5 7 6.5-7 6.5"/></symbol>
+<symbol id="i-chev-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5.5-7 6.5 7 6.5"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.7"/><path d="m4.5 17.5 4.7-4.3 3.6 3.2 2.6-2.3 4.1 3.6"/></symbol>
+<symbol id="i-whatsapp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 11.6a8.2 8.2 0 0 1-12.1 7.2L3.8 20l1.3-4.2A8.2 8.2 0 1 1 20.2 11.6Z"/><path d="M9 9.2c0 3 2.3 5.4 5.3 5.4.6 0 1-.5 1-1 0-.3-.2-.6-.5-.8l-1-.4-.9.9a4.3 4.3 0 0 1-1.9-1.9l.9-.9-.4-1c-.2-.3-.5-.5-.8-.5-.5 0-1 .4-1 1Z"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.5H6.5v17h11V7L14 3.5Z"/><path d="M13.7 3.7V7h3.6M9 12h6M9 15.5h6"/></symbol>
+<symbol id="i-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="5.5" width="18.4" height="13" rx="2"/><path d="M2.8 10h18.4M6.5 14.5h3"/></symbol>
+<symbol id="i-cash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="6.5" width="18.4" height="11" rx="1.8"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+<symbol id="i-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h15M9 7V4.8h6V7M6.5 7l1 13h9l1-13"/></symbol>
+
+<symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="5" width="18.4" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h3l1.5 4-2 1.4a12 12 0 0 0 6.1 6.1l1.4-2 4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2Z"/></symbol>
+<symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 1 1 3.4 2.5c-.6.2-.9.8-.9 1.4v.6"/><circle cx="12" cy="16.8" r=".9" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V4M4 20h16"/><path d="M8 17v-5M12.5 17V7.5M17 17v-7"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10" width="15" height="10" rx="2"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10"/><path d="M12 14v2.5"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 5.8A9.5 9.5 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-2.6 3.4M6.3 7.3A16.6 16.6 0 0 0 2.5 12S6 18.5 12 18.5a9 9 0 0 0 4.3-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3.5 3.5 17 17"/></symbol>
+<symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-3"/><path d="M10 16.5 5.5 12 10 7.5M5.5 12h10"/></symbol>
+<symbol id="i-dot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6v12M15 6v12"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5.5v13l10-6.5-10-6.5Z"/></symbol>
+<symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 6.5 5.5-2 6 2 5.5-2v13l-5.5 2-6-2-5.5 2v-13Z"/><path d="M9 4.5v13M15 6.5v13"/></symbol>
+<symbol id="i-award" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.5"/><path d="m8.5 13.8-1.3 6.4 4.8-2.4 4.8 2.4-1.3-6.4"/></symbol>
+<symbol id="i-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 20.5V5a1.5 1.5 0 0 1 1.5-1.5h7A1.5 1.5 0 0 1 14.5 5v15.5"/><path d="M14.5 10h4a1 1 0 0 1 1 1v9.5M3 20.5h18"/><path d="M8 7.5h3M8 11h3M8 14.5h3"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11M8 11l4 4 4-4"/><path d="M4.5 18.5v2h15v-2"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 5.2a3.2 3.2 0 0 1 0 5.6M17.5 13.5A5.5 5.5 0 0 1 21 19"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 4.5h9a3 3 0 0 1 3 3v12a2.5 2.5 0 0 0-2.5-2.5h-9.5Z"/><path d="M19.5 4.5h-3v15h3Z"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.2 2.4 3.3 5.3 3.3 8.5S14.2 18.1 12 20.5c-2.2-2.4-3.3-5.3-3.3-8.5S9.8 5.9 12 3.5Z"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.2M12 18.8V21M21 12h-2.2M5.2 12H3M18.4 5.6 16.8 7.2M7.2 16.8l-1.6 1.6M18.4 18.4l-1.6-1.6M7.2 7.2 5.6 5.6"/></symbol>
+<symbol id="i-chev-d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m5.5 9 6.5 7 6.5-7"/></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M6.5 20h11M5 7.5h14"/><path d="M5 7.5 2.5 14h5L5 7.5ZM19 7.5 16.5 14h5L19 7.5Z"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 3.5 10.5 13.5M20.5 3.5l-6.5 17-3.5-7-7-3.5 17-6.5Z"/></symbol>
+<!-- Nuevos para la app móvil (mismo estilo: 24x24, trazo 1.7, sin relleno) -->
+<symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5 12 4l8.5 6.5V20h-5.5v-5.5h-6V20H3.5z"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5a6 6 0 0 1 12 0c0 5.5 2.2 7.5 2.2 7.5H3.8S6 15 6 9.5Z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5.5 12h13"/></symbol>
+<symbol id="i-heart-f" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 7.8a4.1 4.1 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20Z"/></symbol>
+<symbol id="i-fork" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5v6a2 2 0 0 0 4 0v-6M9 9.5v11M16.5 20.5v-17c-2 1-3 3.5-3 7.5h3"/></symbol>
+<symbol id="i-pill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></symbol>
+<symbol id="i-signal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5v-8"/><circle cx="12" cy="10.5" r="1.6"/><path d="M8.3 7a5 5 0 0 0 0 7M15.7 7a5 5 0 0 1 0 7M5.5 4.3a9 9 0 0 0 0 12.4M18.5 4.3a9 9 0 0 1 0 12.4"/></symbol>
+<symbol id="i-panel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h14l1.5 10h-17z"/><path d="M4.2 9.5h15.6M9.7 4.5 9 14.5M14.3 4.5l.7 10M12 14.5v5M8.5 19.5h7"/></symbol>
+</svg>
+<div class="app" data-app data-bar="off">
+  <section class="screen demo-screen" data-host>
+    <div class="demo" role="region" aria-label="Controles de la demo">
+      <div class="demo__top">
+        <span class="demo__tag">Demo · solo visualización</span>
+        <a class="demo__theme" href="index.html#/cuenta">Ir a la app</a>
+        <button class="demo__theme" type="button" data-theme-btn aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-moon"/></svg><span>Oscuro</span></button>
+      </div>
+      <label class="sr" for="demo-state">Ver pantalla</label>
+      <select id="demo-state" data-state-pick>
+        <optgroup label="Iniciar sesión">
+          <option value="login">Iniciar sesión</option>
+          <option value="login-error">Correo o contraseña incorrectos</option>
+          <option value="login-locked">Cuenta bloqueada</option>
+          <option value="login-offline">Sin conexión</option>
+          <option value="twofa">Verificación en dos pasos</option>
+          <option value="twofa-error">Código no válido</option>
+        </optgroup>
+        <optgroup label="Crear cuenta">
+          <option value="register">Crear cuenta · comprar</option>
+          <option value="register-seller">Crear cuenta · vender</option>
+          <option value="register-tech">Crear cuenta · técnico</option>
+          <option value="register-filled">Crear cuenta · contraseña válida</option>
+          <option value="register-done">Cuenta creada</option>
+        </optgroup>
+        <optgroup label="Después de entrar">
+          <option value="account">Cuenta con sesión</option>
+        </optgroup>
+      </select>
+      <p class="demo__hint">Nada se envía: las respuestas son simuladas. Un correo con «2fa» pide código (123456) y uno con «bloqueada» muestra la cuenta bloqueada.</p>
+    </div>
+    <div data-view></div>
+  </section>
+  <div class="toast" role="status" aria-live="polite" data-toast-out></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var view = document.querySelector('[data-view]'), host = document.querySelector('[data-host]'), pick = document.querySelector('[data-state-pick]');
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var user = { first: 'Carlos', last: 'Mendoza', email: 'carlos@empresa.com' };
+  var ico = function (id, cls) { return '<svg class="ico' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#i-' + id + '"/></svg>'; };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var wait = function (ms) { return new Promise(function (r) { setTimeout(r, reduce ? Math.min(ms, 300) : ms); }); };
+  var toastT;
+  function toast(msg) { var el = document.querySelector('[data-toast-out]'); el.textContent = msg; el.classList.add('is-on'); clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove('is-on'); }, 2600); }
+
+  var INTENT = {
+    buy:    { ico: 'cart',  label: 'Comprar',  sub: 'Regístrate gratis para comprar, vender o trabajar como técnico en Venezuela.' },
+    sell:   { ico: 'store', label: 'Vender',   sub: 'Crea tu cuenta y da de alta tu empresa en Venezuela. Sin cuota de entrada: pagas una comisión solo sobre lo que vendes.' },
+    tech:   { ico: 'tools', label: 'Técnico',  sub: 'Crea tu cuenta y en un minuto tendrás tu perfil de técnico en Venezuela. Después te pedimos tu cédula, tus oficios y tu zona; VexBiz revisa y te avisa.' }
+  };
+  var RULES = [
+    ['len', 'Mínimo 10 caracteres', function (p) { return p.length >= 10; }],
+    ['let', 'Al menos una letra', function (p) { return /\p{L}/u.test(p); }],
+    ['num', 'Al menos un número', function (p) { return /\d/.test(p); }]
+  ];
+
+  /* Barra con la marca: el título principal va en la tarjeta (auditoría 28/09) */
+  var topbar = function () { return '<header class="topbar"><button class="iconbtn" type="button" data-go="login" aria-label="Volver">' + ico('chev-l') + '</button><span class="topbar__brand"><img class="brandmark--on-light" src="assets/img/logo-claro.webp" width="92" height="36" alt="VEXBIZ"><img class="brandmark--on-dark" src="assets/img/logo-oscuro.webp" width="92" height="36" alt="VEXBIZ"></span></header>'; };
+  var msg = function (kind, icon, text, attr) { return '<div class="msg msg--' + kind + '" ' + attr + (text ? '' : ' hidden') + '>' + (text ? ico(icon) + '<span>' + esc(text) + '</span>' : '') + '</div>'; };
+  var link = function (label, go) { return '<a class="textlink" href="#" data-go="' + go + '">' + label + '</a>'; };
+  var fakeLink = function (label, note) { return '<a class="textlink" href="#" data-toast="' + esc(note) + '">' + label + '</a>'; };
+  var head = function (icon, title, sub) { return '<div class="auth__head"><span class="auth__badge">' + ico(icon) + '</span><div><h1 tabindex="-1" data-focus>' + title + '</h1><p>' + sub + '</p></div></div>'; };
+  var safe = '<p class="auth__safe">' + ico('lock') + '<span>La conexión va directo a VEXBIZ. La app no guarda tu contraseña.</span></p>';
+
+  /* ---------- Pantallas ---------- */
+  function login(o) {
+    o = o || {};
+    return topbar('Iniciar sesión') + '<div class="auth"><div class="auth__card">' +
+      head('shield', 'Iniciar sesión', 'Ingresa con tu email y contraseña registrados en Venezuela.') +
+      '<form novalidate data-form="login"' + (o.bad ? ' data-preset="' + o.bad + '|' + esc(o.error) + '"' : '') + '>' +
+        msg('danger', 'alert', o.bad ? '' : o.error, 'role="alert" data-error') + msg('info', 'help', o.notice, 'role="status" data-notice') +
+        '<div class="fld' + (o.bad === 'email' ? ' fld--bad' : '') + '"><label for="lg-email">Correo electrónico</label><div class="fld__box">' + ico('mail') +
+          '<input id="lg-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="nombre@ejemplo.com" value="' + esc(o.email || '') + '"></div></div>' +
+        '<div class="fld' + (o.bad === 'password' ? ' fld--bad' : '') + '"><div class="fld__top"><label for="lg-pass">Contraseña</label>' + fakeLink('¿Olvidaste tu contraseña?', 'En la app real abre ve.vexbiz.com/recover') + '</div><div class="fld__box">' + ico('lock') +
+          '<input id="lg-pass" name="password" type="password" autocomplete="current-password" value="' + esc(o.password || '') + '">' + peekBtn('lg-pass') + '</div></div>' +
+        '<button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="submit" data-submit><span class="vx-btn__label">Entrar a mi cuenta</span></button>' +
+      '</form>' + safe + '</div>' +
+      '<p class="auth__alt">¿Todavía no tienes cuenta en Venezuela? ' + link('Crear cuenta gratis', 'register') + '</p></div>';
+  }
+  function twofa(o) {
+    o = o || {};
+    return topbar('Iniciar sesión') + '<div class="auth"><div class="auth__card">' +
+      head('shield', 'Verificación en dos pasos', 'Escribe el código de tu app de autenticación para terminar de entrar.') +
+      '<form novalidate data-form="twofa"' + (o.error ? ' data-preset="code|' + esc(o.error) + '"' : '') + '>' + msg('danger', 'alert', '', 'role="alert" data-error') +
+        '<div class="fld fld__code"><label for="lg-code">Código de verificación</label><div class="fld__box">' + ico('shield') +
+          '<input id="lg-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="12" autocapitalize="none" spellcheck="false"></div></div>' +
+        '<button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="submit" data-submit><span class="vx-btn__label">Validar y entrar</span></button>' +
+        '<button class="vx-btn vx-btn--ghost vx-btn--block" type="button" data-go="login"><span class="vx-btn__label">Usar otra cuenta</span></button>' +
+      '</form>' + safe + '</div></div>';
+  }
+  function register(o) {
+    o = o || {};
+    var it = INTENT[o.intent || 'buy'], p = o.password || '';
+    return topbar('Crear cuenta') + '<div class="auth"><div class="auth__card">' +
+      head('user', 'Crear cuenta', '<span data-intent-sub>' + esc(it.sub) + '</span>') +
+      '<form novalidate data-form="register">' + msg('danger', 'alert', o.error, 'role="alert" data-error') +
+        '<fieldset class="seg"><legend>Quiero</legend>' + Object.keys(INTENT).map(function (k) {
+          return '<label>' + ico(INTENT[k].ico) + INTENT[k].label + '<input type="radio" name="intent" value="' + k + '"' + ((o.intent || 'buy') === k ? ' checked' : '') + '></label>';
+        }).join('') + '</fieldset>' +
+        '<div class="fld-row">' +
+          '<div class="fld"><label for="rg-name">Nombre *</label><div class="fld__box"><input id="rg-name" name="name" type="text" autocomplete="given-name" placeholder="Ej. Carlos" value="' + esc(o.name || '') + '"></div></div>' +
+          '<div class="fld"><label for="rg-last">Apellido *</label><div class="fld__box"><input id="rg-last" name="last" type="text" autocomplete="family-name" placeholder="Ej. Mendoza" value="' + esc(o.last || '') + '"></div></div>' +
+        '</div>' +
+        '<div class="fld"><label for="rg-email">Correo electrónico *</label><div class="fld__box">' + ico('mail') + '<input id="rg-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="tunombre@empresa.com" value="' + esc(o.email || '') + '"></div></div>' +
+        '<div class="fld"><label for="rg-pass">Contraseña de acceso *</label><div class="fld__box">' + ico('lock') + '<input id="rg-pass" name="password" type="password" autocomplete="new-password" placeholder="Mínimo 10 caracteres" aria-describedby="rg-rules" value="' + esc(p) + '">' + peekBtn('rg-pass') + '</div>' +
+          '<ul class="rules" id="rg-rules" data-rules>' + rulesHtml(p) + '</ul></div>' +
+        '<div class="fld"><label for="rg-ref">Código de invitación (opcional)</label><div class="fld__box"><input id="rg-ref" name="ref" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Ej. VX-8942"></div></div>' +
+        '<button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="submit" data-submit><span class="vx-btn__label">Registrar mi cuenta</span></button>' +
+        '<p class="auth__legal">Al registrarte, confirmas que aceptas nuestros ' + fakeLink('Términos y Condiciones', 'Términos y Condiciones de VEXBIZ') + ' y la ' + fakeLink('Política de Privacidad', 'Política de Privacidad de VEXBIZ') + '.</p>' +
+      '</form></div>' +
+      '<p class="auth__alt">¿Ya tienes una cuenta registrada? ' + link('Iniciar sesión', 'login') + '</p></div>';
+  }
+  function registerDone() {
+    return topbar('Crear cuenta') + '<div class="done done--auth"><span class="done__ico">' + ico('check-circle') + '</span><h1 tabindex="-1" data-focus>Cuenta creada</h1>' +
+      '<p>Bienvenido a VEXBIZ, ' + esc(user.first) + '. Ya puedes comprar en tiendas verificadas de Venezuela con ' + esc(user.email) + '.</p></div>' +
+      '<div class="stack" style="display:flex;flex-direction:column;gap:12px;padding:0 var(--app-gutter)">' +
+        '<button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="button" data-go="account"><span class="vx-btn__label">Ir a mi cuenta</span></button>' +
+        '<button class="vx-btn vx-btn--ghost vx-btn--block" type="button" data-toast="En la app real vuelve a Inicio"><span class="vx-btn__label">Seguir comprando</span></button></div>';
+  }
+  function account() {
+    var full = user.last ? user.first + ' ' + user.last : user.email, ini = (user.first[0] || '') + (user.last[0] || '');
+    return '<header class="page-head" style="padding-top:var(--vx-sp-5)"><h1 class="page-head__title" tabindex="-1" data-focus>Cuenta</h1></header>' +
+      '<div class="profile"><span class="profile__ava profile__ava--in">' + esc(ini.toUpperCase()) + '</span><span class="profile__body"><b>Hola, ' + esc(user.first) + '</b><span>' + esc(full) + '</span></span>' +
+        '<button class="vx-btn" type="button" data-logout><span class="vx-btn__label">Salir</span></button></div>' +
+      '<p class="label" style="padding:20px var(--app-gutter) 8px">Mis compras</p><div class="list">' +
+        row('box', 'Mis pedidos', 'Tus compras en VEXBIZ') + row('heart', 'Favoritos', 'Productos guardados') + row('pin', 'Mis direcciones', 'Ciudad Guayana') + '</div>' +
+      '<p class="foot-note">Demo · la cuenta real muestra tu nombre y tus compras de ve.vexbiz.com</p>';
+  }
+  function row(icon, t, s) { return '<button class="row" type="button" data-toast="' + esc(t) + ': en la app real abre la pantalla"><span class="row__thumb row__thumb--ico">' + ico(icon) + '</span><span class="row__body"><span class="row__title">' + t + '</span><span class="row__sub">' + s + '</span></span>' + ico('chev-r') + '</button>'; }
+  function peekBtn(id) { return '<button class="iconbtn" type="button" data-peek aria-pressed="false" aria-label="Ver contraseña" aria-controls="' + id + '">' + ico('eye') + '</button>'; }
+  function rulesHtml(p) { return RULES.map(function (r) { var ok = r[2](p); return '<li class="' + (ok ? 'is-ok' : '') + '" data-rule="' + r[0] + '">' + ico(ok ? 'check-circle' : 'dot') + '<span>' + r[1] + '</span><span class="sr">' + (ok ? ': cumple' : ': falta') + '</span></li>'; }).join(''); }
+
+  var STATES = {
+    'login':          function () { return [login()]; },
+    'login-error':    function () { return [login({ email: user.email, error: 'Correo o contraseña incorrectos. Revísalos o usa «¿Olvidaste tu contraseña?».', bad: 'password' })]; },
+    'login-locked':   function () { return [login({ email: user.email, notice: 'Bloqueamos la cuenta un rato por demasiados intentos. Prueba de nuevo en unos minutos.' })]; },
+    'login-offline':  function () { return [login({ email: user.email, error: 'No hay conexión. Comprueba tu red e inténtalo otra vez.' })]; },
+    'twofa':          function () { return [twofa()]; },
+    'twofa-error':    function () { return [twofa({ error: 'Ese código no es válido. Escribe el código que aparece ahora en tu app.' })]; },
+    'register':       function () { return [register({ intent: 'buy' })]; },
+    'register-seller':function () { return [register({ intent: 'sell' })]; },
+    'register-tech':  function () { return [register({ intent: 'tech' })]; },
+    'register-filled':function () { return [register({ intent: 'buy', name: user.first, last: user.last, email: user.email, password: 'Refrigera2026' })]; },
+    'register-done':  function () { return [registerDone()]; },
+    'account':        function () { return [account()]; }
+  };
+
+  function show(state, focus) {
+    if (!STATES[state]) state = 'login';
+    view.innerHTML = STATES[state]()[0];
+    pick.value = state;
+    try { history.replaceState(null, '', '#' + state); } catch (e) {}
+    host.scrollTop = 0;
+    bind(state);
+    if (focus) { var f = view.querySelector('[data-focus]') || view.querySelector('h1'); if (f) { f.setAttribute('tabindex', '-1'); f.focus({ preventScroll: true }); } }
+  }
+
+  /* ---------- Comportamiento simulado ---------- */
+  function busy(btn, text) { var l = btn.querySelector('.vx-btn__label'); btn.dataset.idle = l.textContent; btn.dataset.state = 'sending'; btn.setAttribute('aria-busy', 'true'); l.textContent = text; }
+  function idle(btn) { var l = btn.querySelector('.vx-btn__label'); btn.removeAttribute('data-state'); btn.removeAttribute('aria-busy'); l.textContent = btn.dataset.idle || l.textContent; }
+  function done(btn, next) { var l = btn.querySelector('.vx-btn__label'); btn.removeAttribute('aria-busy'); btn.dataset.state = 'done'; l.innerHTML = ico('check', 'ico--sm') + 'Listo'; setTimeout(function () { show(next, true); }, reduce ? 300 : 1100); }
+  function setMsg(form, sel, kind, icon, text) { var m = form.querySelector(sel); if (!m) return; m.hidden = !text; m.innerHTML = text ? ico(icon) + '<span>' + esc(text) + '</span>' : ''; }
+  /* Error junto al campo, igual que la app (fieldError en views/login.js) */
+  function mark(input, text) {
+    var f = input.closest('.fld'); if (!f) return;
+    var id = input.id + '-err', p = f.querySelector('.fld__err');
+    if (!p) { p = document.createElement('p'); p.className = 'fld__err'; p.id = id; f.querySelector('.fld__box').after(p); }
+    f.classList.toggle('fld--bad', !!text); p.hidden = !text; p.innerHTML = text ? ico('alert') + '<span>' + esc(text) + '</span>' : '';
+    var d = (input.getAttribute('aria-describedby') || '').split(' ').filter(function (x) { return x && x !== id; });
+    if (text) { d.unshift(id); input.setAttribute('aria-invalid', 'true'); } else input.removeAttribute('aria-invalid');
+    if (d.length) input.setAttribute('aria-describedby', d.join(' ')); else input.removeAttribute('aria-describedby');
+  }
+
+  function bind(state) {
+    var form = view.querySelector('form');
+    if (!form) return;
+    form.querySelectorAll('input').forEach(function (i) { i.addEventListener('input', function () { mark(i, ''); setMsg(form, '[data-error]', 'danger', 'alert', ''); }); });
+    if (form.dataset.preset) { var pr = form.dataset.preset.split('|'), inp = form.elements[pr[0]]; if (inp) mark(inp, pr.slice(1).join('|')); }
+
+    if (form.dataset.form === 'login') {
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        var btn = form.querySelector('[data-submit]'); if (btn.dataset.state) return;
+        var e = form.elements.email, p = form.elements.password;
+        setMsg(form, '[data-notice]', 'info', 'help', '');
+        if (!/^\S+@\S+\.\S+$/.test(e.value.trim())) { mark(e, 'Escribe el correo con el que te registraste, por ejemplo nombre@ejemplo.com.'); e.focus(); return; }
+        if (!p.value) { mark(p, 'Escribe tu contraseña.'); p.focus(); return; }
+        busy(btn, 'Entrando…');
+        wait(900).then(function () {
+          var v = e.value.toLowerCase();
+          if (v.indexOf('bloquead') >= 0) { idle(btn); setMsg(form, '[data-notice]', 'info', 'help', 'Bloqueamos la cuenta un rato por demasiados intentos. Prueba de nuevo en unos minutos.'); return; }
+          if (v.indexOf('2fa') >= 0) { show('twofa', true); return; }
+          var cap = function (w) { return w ? w.charAt(0).toUpperCase() + w.slice(1) : ''; };
+          var parts = v.split('@')[0].replace(/[^a-záéíóúñ]/gi, ' ').trim().split(/\s+/);
+          user = { first: cap(parts[0]) || 'Carlos', last: cap(parts[1] || ''), email: v };
+          done(btn, 'account');
+        });
+      });
+    }
+    if (form.dataset.form === 'twofa') {
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        var btn = form.querySelector('[data-submit]'); if (btn.dataset.state) return;
+        var c = form.elements.code;
+        if (!c.value.trim()) { mark(c, 'Escribe el código de 6 dígitos de tu app de autenticación.'); c.focus(); return; }
+        busy(btn, 'Comprobando código…');
+        wait(900).then(function () {
+          if (c.value.trim() === '123456') { done(btn, 'account'); return; }
+          idle(btn); c.value = ''; mark(c, 'Ese código no es válido. Escribe el código que aparece ahora en tu app.'); c.focus();
+        });
+      });
+      setTimeout(function () { form.elements.code.focus({ preventScroll: true }); }, 60);
+    }
+    if (form.dataset.form === 'register') {
+      var pass = form.elements.password, list = form.querySelector('[data-rules]');
+      pass.addEventListener('input', function () { list.innerHTML = rulesHtml(pass.value); });
+      form.addEventListener('change', function (ev) {
+        if (ev.target.name === 'intent') form.closest('.auth__card').querySelector('[data-intent-sub]').textContent = INTENT[ev.target.value].sub;
+      });
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        var btn = form.querySelector('[data-submit]'); if (btn.dataset.state) return;
+        var f = form.elements, miss = null, err = '';
+        if (!f.name.value.trim()) { miss = f.name; err = 'Escribe tu nombre.'; }
+        else if (!f.last.value.trim()) { miss = f.last; err = 'Escribe tu apellido.'; }
+        else if (!/^\S+@\S+\.\S+$/.test(f.email.value.trim())) { miss = f.email; err = 'Escribe un correo válido, por ejemplo tunombre@empresa.com.'; }
+        else if (!RULES.every(function (r) { return r[2](f.password.value); })) { miss = f.password; err = 'La contraseña todavía no cumple los tres requisitos.'; }
+        if (miss) { mark(miss, err); miss.focus(); return; }
+        user = { first: f.name.value.trim(), last: f.last.value.trim(), email: f.email.value.trim() };
+        busy(btn, 'Creando cuenta…');
+        wait(1100).then(function () { show('register-done', true); });
+      });
+    }
+  }
+
+  /* ---------- Delegación ---------- */
+  document.addEventListener('click', function (e) {
+    var go = e.target.closest('[data-go]');
+    if (go) { e.preventDefault(); show(go.dataset.go, true); return; }
+    var pk = e.target.closest('[data-peek]');
+    if (pk) {
+      var inp = document.getElementById(pk.getAttribute('aria-controls')), on = inp.type === 'password';
+      inp.type = on ? 'text' : 'password';
+      pk.setAttribute('aria-pressed', String(on)); pk.setAttribute('aria-label', on ? 'Ocultar contraseña' : 'Ver contraseña');
+      pk.querySelector('use').setAttribute('href', '#i-' + (on ? 'eye-off' : 'eye'));
+      return;
+    }
+    if (e.target.closest('[data-logout]')) { toast('Cerraste sesión'); show('login', true); return; }
+    var t = e.target.closest('[data-toast]');
+    if (t) { e.preventDefault(); toast(t.dataset.toast); }
+  });
+  pick.addEventListener('change', function () { show(pick.value, false); });
+  window.addEventListener('hashchange', function () { var h = location.hash.slice(1); if (h && h !== pick.value) show(h, true); });
+
+  var themeBtn = document.querySelector('[data-theme-btn]');
+  function isDark() { var a = document.documentElement.getAttribute('data-theme'); return a ? a === 'dark' : !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches); }
+  function paintTheme() { var d = isDark(); themeBtn.setAttribute('aria-pressed', String(d)); themeBtn.querySelector('span').textContent = d ? 'Claro' : 'Oscuro'; themeBtn.querySelector('use').setAttribute('href', '#i-' + (d ? 'sun' : 'moon')); document.querySelectorAll('meta[name=theme-color]').forEach(function (m) { m.content = d ? '#1E262A' : '#FFD85E'; }); }
+  themeBtn.addEventListener('click', function () { var next = isDark() ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', next); try { localStorage.setItem('vx-theme', next); } catch (e) {} paintTheme(); });
+  paintTheme();
+
+  show((location.hash || '').slice(1) || 'login', false);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FFD85E" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E262A" media="(prefers-color-scheme: dark)">
+<title>VEXBIZ · Acceso (demo)</title>
+<link rel="icon" href="assets/icons/favicon-64.png">
+<!-- Copia SOLO PARA VISUALIZACIÓN de Iniciar sesión y Crear cuenta. No se conecta a ninguna API:
+     todas las respuestas son simuladas en esta página. Generada por tools/build_local.py desde
+     tools/acceso-demo.template.html (el sprite de íconos se copia de index.html). -->
+<link rel="stylesheet" href="assets/css/fonts.local.css">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/app.css">
+<style>
+  /* Barra de la demo: fuera del diseño de la app, solo para moverse entre estados */
+  .demo { position: sticky; top: 0; z-index: calc(var(--vx-z-sticky) + 1); display: flex; flex-direction: column; gap: var(--vx-sp-2); padding: var(--vx-sp-2) var(--app-gutter) var(--vx-sp-3); background: var(--vx-n-800); color: var(--vx-n-0); }
+  .demo__top { display: flex; align-items: center; gap: var(--vx-sp-2); }
+  .demo__tag { flex: 1; min-width: 0; font-size: var(--vx-fs-xs); font-weight: 700; letter-spacing: var(--vx-ls-caps); text-transform: uppercase; color: var(--vx-n-200); }
+  .demo select { width: 100%; height: var(--vx-tap); padding-inline: var(--vx-sp-3); border-radius: var(--vx-r-md); border: 1px solid var(--vx-n-600); background: var(--vx-n-900); color: var(--vx-n-0); font: inherit; font-size: var(--vx-fs-body); }
+  .demo__theme { height: var(--vx-tap); padding-inline: var(--vx-sp-3); border-radius: var(--vx-r-md); border: 1px solid var(--vx-n-600); color: var(--vx-n-0); font-size: var(--vx-fs-sm); font-weight: 600; display: inline-flex; align-items: center; gap: var(--vx-sp-1); }
+  .demo__theme .ico { width: 18px; height: 18px; }
+  .demo__hint { margin: 0; font-size: var(--vx-fs-xs); color: var(--vx-n-200); }
+  .demo-screen { padding-bottom: var(--vx-sp-8); }
+  .demo-screen .topbar { top: 0; position: relative; }
+  .app .toast { bottom: calc(var(--vx-sp-6) + env(safe-area-inset-bottom, 0px)); }
+</style>
+<script>try{var t=localStorage.getItem('vx-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body>
+<!--SPRITE-->
+<div class="app" data-app data-bar="off">
+  <section class="screen demo-screen" data-host>
+    <div class="demo" role="region" aria-label="Controles de la demo">
+      <div class="demo__top">
+        <span class="demo__tag">Demo · solo visualización</span>
+        <a class="demo__theme" href="index.html#/cuenta">Ir a la app</a>
+        <button class="demo__theme" type="button" data-theme-btn aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-moon"/></svg><span>Oscuro</span></button>
+      </div>
+      <label class="sr" for="demo-state">Ver pantalla</label>
+      <select id="demo-state" data-state-pick>
+        <optgroup label="Iniciar sesión">
+          <option value="login">Iniciar sesión</option>
+          <option value="login-error">Correo o contraseña incorrectos</option>
+          <option value="login-locked">Cuenta bloqueada</option>
+          <option value="login-offline">Sin conexión</option>
+          <option value="twofa">Verificación en dos pasos</option>
+          <option value="twofa-error">Código no válido</option>
+        </optgroup>
+        <optgroup label="Crear cuenta">
+          <option value="register">Crear cuenta · comprar</option>
+          <option value="register-seller">Crear cuenta · vender</option>
+          <option value="register-tech">Crear cuenta · técnico</option>
+          <option value="register-filled">Crear cuenta · contraseña válida</option>
+          <option value="register-done">Cuenta creada</option>
+        </optgroup>
+        <optgroup label="Después de entrar">
+          <option value="account">Cuenta con sesión</option>
+        </optgroup>
+      </select>
+      <p class="demo__hint">Nada se envía: las respuestas son simuladas. Un correo con «2fa» pide código (123456) y uno con «bloqueada» muestra la cuenta bloqueada.</p>
+    </div>
+    <div data-view></div>
+  </section>
+  <div class="toast" role="status" aria-live="polite" data-toast-out></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var view = document.querySelector('[data-view]'), host = document.querySelector('[data-host]'), pick = document.querySelector('[data-state-pick]');
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var user = { first: 'Carlos', last: 'Mendoza', email: 'carlos@empresa.com' };
+  var ico = function (id, cls) { return '<svg class="ico' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#i-' + id + '"/></svg>'; };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var wait = function (ms) { return new Promise(function (r) { setTimeout(r, reduce ? Math.min(ms, 300) : ms); }); };
+  var toastT;
+  function toast(msg) { var el = document.querySelector('[data-toast-out]'); el.textContent = msg; el.classList.add('is-on'); clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove('is-on'); }, 2600); }
+
+  var INTENT = {
+    buy:    { ico: 'cart',  label: 'Comprar',  sub: 'Regístrate gratis para comprar, vender o trabajar como técnico en Venezuela.' },
+    sell:   { ico: 'store', label: 'Vender',   sub: 'Crea tu cuenta y da de alta tu empresa en Venezuela. Sin cuota de entrada: pagas una comisión solo sobre lo que vendes.' },
+    tech:   { ico: 'tools', label: 'Técnico',  sub: 'Crea tu cuenta y en un minuto tendrás tu perfil de técnico en Venezuela. Después te pedimos tu cédula, tus oficios y tu zona; VexBiz revisa y te avisa.' }
+  };
+  var RULES = [
+    ['len', 'Mínimo 10 caracteres', function (p) { return p.length >= 10; }],
+    ['let', 'Al menos una letra', function (p) { return /\p{L}/u.test(p); }],
+    ['num', 'Al menos un número', function (p) { return /\d/.test(p); }]
+  ];
+
+  /* Barra con la marca: el título principal va en la tarjeta (auditoría 28/09) */
+  var topbar = function () { return '<header class="topbar"><button class="iconbtn" type="button" data-go="login" aria-label="Volver">' + ico('chev-l') + '</button><span class="topbar__brand"><img class="brandmark--on-light" src="assets/img/logo-claro.webp" width="92" height="36" alt="VEXBIZ"><img class="brandmark--on-dark" src="assets/img/logo-oscuro.webp" width="92" height="36" alt="VEXBIZ"></span></header>'; };
+  var msg = function (kind, icon, text, attr) { return '<div class="msg msg--' + kind + '" ' + attr + (text ? '' : ' hidden') + '>' + (text ? ico(icon) + '<span>' + esc(text) + '</span>' : '') + '</div>'; };
+  var link = function (label, go) { return '<a class="textlink" href="#" data-go="' + go + '">' + label + '</a>'; };
+  var fakeLink = function (label, note) { return '<a class="textlink" href="#" data-toast="' + esc(note) + '">' + label + '</a>'; };
+  var head = function (icon, title, sub) { return '<div class="auth__head"><span class="auth__badge">' + ico(icon) + '</span><div><h1 tabindex="-1" data-focus>' + title + '</h1><p>' + sub + '</p></div></div>'; };
+  var safe = '<p class="auth__safe">' + ico('lock') + '<span>La conexión va directo a VEXBIZ. La app no guarda tu contraseña.</span></p>';
+
+  /* ---------- Pantallas ---------- */
+  function login(o) {
+    o = o || {};
+    return topbar('Iniciar sesión') + '<div class="auth"><div class="auth__card">' +
+      head('shield', 'Iniciar sesión', 'Ingresa con tu email y contraseña registrados en Venezuela.') +
+      '<form novalidate data-form="login"' + (o.bad ? ' data-preset="' + o.bad + '|' + esc(o.error) + '"' : '') + '>' +
+        msg('danger', 'alert', o.bad ? '' : o.error, 'role="alert" data-error') + msg('info', 'help', o.notice, 'role="status" data-notice') +
+        '<div class="fld' + (o.bad === 'email' ? ' fld--bad' : '') + '"><label for="lg-email">Correo electrónico</label><div class="fld__box">' + ico('mail') +
+          '<input id="lg-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="nombre@ejemplo.com" value="' + esc(o.email || '') + '"></div></div>' +
+        '<div class="fld' + (o.bad === 'password' ? ' fld--bad' : '') + '"><div class="fld__top"><label for="lg-pass">Contraseña</label>' + fakeLink('¿Olvidaste tu contraseña?', 'En la app real abre ve.vexbiz.com/recover') + '</div><div class="fld__box">' + ico('lock') +
+          '<input id="lg-pass" name="password" type="password" autocomplete="current-password" value="' + esc(o.password || '') + '">' + peekBtn('lg-pass') + '</div></div>' +
+        '<button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="submit" data-submit><span class="vx-btn__label">Entrar a mi cuenta</span></button>' +
+      '</form>' + safe + '</div>' +
+      '<p class="auth__alt">¿Todavía no tienes cuenta en Venezuela? ' + link('Crear cuenta gratis', 'register') + '</p></div>';
+  }
+  function twofa(o) {
+    o = o || {};
+    return topbar('Iniciar sesión') + '<div class="auth"><div class="auth__card">' +
+      head('shield', 'Verificación en dos pasos', 'Escribe el código de tu app de autenticación para terminar de entrar.') +
+      '<form novalidate data-form="twofa"' + (o.error ? ' data-preset="code|' + esc(o.error) + '"' : '') + '>' + msg('danger', 'alert', '', 'role="alert" data-error') +
+        '<div class="fld fld__code"><label for="lg-code">Código de verificación</label><div class="fld__box">' + ico('shield') +
+          '<input id="lg-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="12" autocapitalize="none" spellcheck="false"></div></div>' +
+        '<button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="submit" data-submit><span class="vx-btn__label">Validar y entrar</span></button>' +
+        '<button class="vx-btn vx-btn--ghost vx-btn--block" type="button" data-go="login"><span class="vx-btn__label">Usar otra cuenta</span></button>' +
+      '</form>' + safe + '</div></div>';
+  }
+  function register(o) {
+    o = o || {};
+    var it = INTENT[o.intent || 'buy'], p = o.password || '';
+    return topbar('Crear cuenta') + '<div class="auth"><div class="auth__card">' +
+      head('user', 'Crear cuenta', '<span data-intent-sub>' + esc(it.sub) + '</span>') +
+      '<form novalidate data-form="register">' + msg('danger', 'alert', o.error, 'role="alert" data-error') +
+        '<fieldset class="seg"><legend>Quiero</legend>' + Object.keys(INTENT).map(function (k) {
+          return '<label>' + ico(INTENT[k].ico) + INTENT[k].label + '<input type="radio" name="intent" value="' + k + '"' + ((o.intent || 'buy') === k ? ' checked' : '') + '></label>';
+        }).join('') + '</fieldset>' +
+        '<div class="fld-row">' +
+          '<div class="fld"><label for="rg-name">Nombre *</label><div class="fld__box"><input id="rg-name" name="name" type="text" autocomplete="given-name" placeholder="Ej. Carlos" value="' + esc(o.name || '') + '"></div></div>' +
+          '<div class="fld"><label for="rg-last">Apellido *</label><div class="fld__box"><input id="rg-last" name="last" type="text" autocomplete="family-name" placeholder="Ej. Mendoza" value="' + esc(o.last || '') + '"></div></div>' +
+        '</div>' +
+        '<div class="fld"><label for="rg-email">Correo electrónico *</label><div class="fld__box">' + ico('mail') + '<input id="rg-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="tunombre@empresa.com" value="' + esc(o.email || '') + '"></div></div>' +
+        '<div class="fld"><label for="rg-pass">Contraseña de acceso *</label><div class="fld__box">' + ico('lock') + '<input id="rg-pass" name="password" type="password" autocomplete="new-password" placeholder="Mínimo 10 caracteres" aria-describedby="rg-rules" value="' + esc(p) + '">' + peekBtn('rg-pass') + '</div>' +
+          '<ul class="rules" id="rg-rules" data-rules>' + rulesHtml(p) + '</ul></div>' +
+        '<div class="fld"><label for="rg-ref">Código de invitación (opcional)</label><div class="fld__box"><input id="rg-ref" name="ref" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Ej. VX-8942"></div></div>' +
+        '<button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="submit" data-submit><span class="vx-btn__label">Registrar mi cuenta</span></button>' +
+        '<p class="auth__legal">Al registrarte, confirmas que aceptas nuestros ' + fakeLink('Términos y Condiciones', 'Términos y Condiciones de VEXBIZ') + ' y la ' + fakeLink('Política de Privacidad', 'Política de Privacidad de VEXBIZ') + '.</p>' +
+      '</form></div>' +
+      '<p class="auth__alt">¿Ya tienes una cuenta registrada? ' + link('Iniciar sesión', 'login') + '</p></div>';
+  }
+  function registerDone() {
+    return topbar('Crear cuenta') + '<div class="done done--auth"><span class="done__ico">' + ico('check-circle') + '</span><h1 tabindex="-1" data-focus>Cuenta creada</h1>' +
+      '<p>Bienvenido a VEXBIZ, ' + esc(user.first) + '. Ya puedes comprar en tiendas verificadas de Venezuela con ' + esc(user.email) + '.</p></div>' +
+      '<div class="stack" style="display:flex;flex-direction:column;gap:12px;padding:0 var(--app-gutter)">' +
+        '<button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="button" data-go="account"><span class="vx-btn__label">Ir a mi cuenta</span></button>' +
+        '<button class="vx-btn vx-btn--ghost vx-btn--block" type="button" data-toast="En la app real vuelve a Inicio"><span class="vx-btn__label">Seguir comprando</span></button></div>';
+  }
+  function account() {
+    var full = user.last ? user.first + ' ' + user.last : user.email, ini = (user.first[0] || '') + (user.last[0] || '');
+    return '<header class="page-head" style="padding-top:var(--vx-sp-5)"><h1 class="page-head__title" tabindex="-1" data-focus>Cuenta</h1></header>' +
+      '<div class="profile"><span class="profile__ava profile__ava--in">' + esc(ini.toUpperCase()) + '</span><span class="profile__body"><b>Hola, ' + esc(user.first) + '</b><span>' + esc(full) + '</span></span>' +
+        '<button class="vx-btn" type="button" data-logout><span class="vx-btn__label">Salir</span></button></div>' +
+      '<p class="label" style="padding:20px var(--app-gutter) 8px">Mis compras</p><div class="list">' +
+        row('box', 'Mis pedidos', 'Tus compras en VEXBIZ') + row('heart', 'Favoritos', 'Productos guardados') + row('pin', 'Mis direcciones', 'Ciudad Guayana') + '</div>' +
+      '<p class="foot-note">Demo · la cuenta real muestra tu nombre y tus compras de ve.vexbiz.com</p>';
+  }
+  function row(icon, t, s) { return '<button class="row" type="button" data-toast="' + esc(t) + ': en la app real abre la pantalla"><span class="row__thumb row__thumb--ico">' + ico(icon) + '</span><span class="row__body"><span class="row__title">' + t + '</span><span class="row__sub">' + s + '</span></span>' + ico('chev-r') + '</button>'; }
+  function peekBtn(id) { return '<button class="iconbtn" type="button" data-peek aria-pressed="false" aria-label="Ver contraseña" aria-controls="' + id + '">' + ico('eye') + '</button>'; }
+  function rulesHtml(p) { return RULES.map(function (r) { var ok = r[2](p); return '<li class="' + (ok ? 'is-ok' : '') + '" data-rule="' + r[0] + '">' + ico(ok ? 'check-circle' : 'dot') + '<span>' + r[1] + '</span><span class="sr">' + (ok ? ': cumple' : ': falta') + '</span></li>'; }).join(''); }
+
+  var STATES = {
+    'login':          function () { return [login()]; },
+    'login-error':    function () { return [login({ email: user.email, error: 'Correo o contraseña incorrectos. Revísalos o usa «¿Olvidaste tu contraseña?».', bad: 'password' })]; },
+    'login-locked':   function () { return [login({ email: user.email, notice: 'Bloqueamos la cuenta un rato por demasiados intentos. Prueba de nuevo en unos minutos.' })]; },
+    'login-offline':  function () { return [login({ email: user.email, error: 'No hay conexión. Comprueba tu red e inténtalo otra vez.' })]; },
+    'twofa':          function () { return [twofa()]; },
+    'twofa-error':    function () { return [twofa({ error: 'Ese código no es válido. Escribe el código que aparece ahora en tu app.' })]; },
+    'register':       function () { return [register({ intent: 'buy' })]; },
+    'register-seller':function () { return [register({ intent: 'sell' })]; },
+    'register-tech':  function () { return [register({ intent: 'tech' })]; },
+    'register-filled':function () { return [register({ intent: 'buy', name: user.first, last: user.last, email: user.email, password: 'Refrigera2026' })]; },
+    'register-done':  function () { return [registerDone()]; },
+    'account':        function () { return [account()]; }
+  };
+
+  function show(state, focus) {
+    if (!STATES[state]) state = 'login';
+    view.innerHTML = STATES[state]()[0];
+    pick.value = state;
+    try { history.replaceState(null, '', '#' + state); } catch (e) {}
+    host.scrollTop = 0;
+    bind(state);
+    if (focus) { var f = view.querySelector('[data-focus]') || view.querySelector('h1'); if (f) { f.setAttribute('tabindex', '-1'); f.focus({ preventScroll: true }); } }
+  }
+
+  /* ---------- Comportamiento simulado ---------- */
+  function busy(btn, text) { var l = btn.querySelector('.vx-btn__label'); btn.dataset.idle = l.textContent; btn.dataset.state = 'sending'; btn.setAttribute('aria-busy', 'true'); l.textContent = text; }
+  function idle(btn) { var l = btn.querySelector('.vx-btn__label'); btn.removeAttribute('data-state'); btn.removeAttribute('aria-busy'); l.textContent = btn.dataset.idle || l.textContent; }
+  function done(btn, next) { var l = btn.querySelector('.vx-btn__label'); btn.removeAttribute('aria-busy'); btn.dataset.state = 'done'; l.innerHTML = ico('check', 'ico--sm') + 'Listo'; setTimeout(function () { show(next, true); }, reduce ? 300 : 1100); }
+  function setMsg(form, sel, kind, icon, text) { var m = form.querySelector(sel); if (!m) return; m.hidden = !text; m.innerHTML = text ? ico(icon) + '<span>' + esc(text) + '</span>' : ''; }
+  /* Error junto al campo, igual que la app (fieldError en views/login.js) */
+  function mark(input, text) {
+    var f = input.closest('.fld'); if (!f) return;
+    var id = input.id + '-err', p = f.querySelector('.fld__err');
+    if (!p) { p = document.createElement('p'); p.className = 'fld__err'; p.id = id; f.querySelector('.fld__box').after(p); }
+    f.classList.toggle('fld--bad', !!text); p.hidden = !text; p.innerHTML = text ? ico('alert') + '<span>' + esc(text) + '</span>' : '';
+    var d = (input.getAttribute('aria-describedby') || '').split(' ').filter(function (x) { return x && x !== id; });
+    if (text) { d.unshift(id); input.setAttribute('aria-invalid', 'true'); } else input.removeAttribute('aria-invalid');
+    if (d.length) input.setAttribute('aria-describedby', d.join(' ')); else input.removeAttribute('aria-describedby');
+  }
+
+  function bind(state) {
+    var form = view.querySelector('form');
+    if (!form) return;
+    form.querySelectorAll('input').forEach(function (i) { i.addEventListener('input', function () { mark(i, ''); setMsg(form, '[data-error]', 'danger', 'alert', ''); }); });
+    if (form.dataset.preset) { var pr = form.dataset.preset.split('|'), inp = form.elements[pr[0]]; if (inp) mark(inp, pr.slice(1).join('|')); }
+
+    if (form.dataset.form === 'login') {
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        var btn = form.querySelector('[data-submit]'); if (btn.dataset.state) return;
+        var e = form.elements.email, p = form.elements.password;
+        setMsg(form, '[data-notice]', 'info', 'help', '');
+        if (!/^\S+@\S+\.\S+$/.test(e.value.trim())) { mark(e, 'Escribe el correo con el que te registraste, por ejemplo nombre@ejemplo.com.'); e.focus(); return; }
+        if (!p.value) { mark(p, 'Escribe tu contraseña.'); p.focus(); return; }
+        busy(btn, 'Entrando…');
+        wait(900).then(function () {
+          var v = e.value.toLowerCase();
+          if (v.indexOf('bloquead') >= 0) { idle(btn); setMsg(form, '[data-notice]', 'info', 'help', 'Bloqueamos la cuenta un rato por demasiados intentos. Prueba de nuevo en unos minutos.'); return; }
+          if (v.indexOf('2fa') >= 0) { show('twofa', true); return; }
+          var cap = function (w) { return w ? w.charAt(0).toUpperCase() + w.slice(1) : ''; };
+          var parts = v.split('@')[0].replace(/[^a-záéíóúñ]/gi, ' ').trim().split(/\s+/);
+          user = { first: cap(parts[0]) || 'Carlos', last: cap(parts[1] || ''), email: v };
+          done(btn, 'account');
+        });
+      });
+    }
+    if (form.dataset.form === 'twofa') {
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        var btn = form.querySelector('[data-submit]'); if (btn.dataset.state) return;
+        var c = form.elements.code;
+        if (!c.value.trim()) { mark(c, 'Escribe el código de 6 dígitos de tu app de autenticación.'); c.focus(); return; }
+        busy(btn, 'Comprobando código…');
+        wait(900).then(function () {
+          if (c.value.trim() === '123456') { done(btn, 'account'); return; }
+          idle(btn); c.value = ''; mark(c, 'Ese código no es válido. Escribe el código que aparece ahora en tu app.'); c.focus();
+        });
+      });
+      setTimeout(function () { form.elements.code.focus({ preventScroll: true }); }, 60);
+    }
+    if (form.dataset.form === 'register') {
+      var pass = form.elements.password, list = form.querySelector('[data-rules]');
+      pass.addEventListener('input', function () { list.innerHTML = rulesHtml(pass.value); });
+      form.addEventListener('change', function (ev) {
+        if (ev.target.name === 'intent') form.closest('.auth__card').querySelector('[data-intent-sub]').textContent = INTENT[ev.target.value].sub;
+      });
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        var btn = form.querySelector('[data-submit]'); if (btn.dataset.state) return;
+        var f = form.elements, miss = null, err = '';
+        if (!f.name.value.trim()) { miss = f.name; err = 'Escribe tu nombre.'; }
+        else if (!f.last.value.trim()) { miss = f.last; err = 'Escribe tu apellido.'; }
+        else if (!/^\S+@\S+\.\S+$/.test(f.email.value.trim())) { miss = f.email; err = 'Escribe un correo válido, por ejemplo tunombre@empresa.com.'; }
+        else if (!RULES.every(function (r) { return r[2](f.password.value); })) { miss = f.password; err = 'La contraseña todavía no cumple los tres requisitos.'; }
+        if (miss) { mark(miss, err); miss.focus(); return; }
+        user = { first: f.name.value.trim(), last: f.last.value.trim(), email: f.email.value.trim() };
+        busy(btn, 'Creando cuenta…');
+        wait(1100).then(function () { show('register-done', true); });
+      });
+    }
+  }
+
+  /* ---------- Delegación ---------- */
+  document.addEventListener('click', function (e) {
+    var go = e.target.closest('[data-go]');
+    if (go) { e.preventDefault(); show(go.dataset.go, true); return; }
+    var pk = e.target.closest('[data-peek]');
+    if (pk) {
+      var inp = document.getElementById(pk.getAttribute('aria-controls')), on = inp.type === 'password';
+      inp.type = on ? 'text' : 'password';
+      pk.setAttribute('aria-pressed', String(on)); pk.setAttribute('aria-label', on ? 'Ocultar contraseña' : 'Ver contraseña');
+      pk.querySelector('use').setAttribute('href', '#i-' + (on ? 'eye-off' : 'eye'));
+      return;
+    }
+    if (e.target.closest('[data-logout]')) { toast('Cerraste sesión'); show('login', true); return; }
+    var t = e.target.closest('[data-toast]');
+    if (t) { e.preventDefault(); toast(t.dataset.toast); }
+  });
+  pick.addEventListener('change', function () { show(pick.value, false); });
+  window.addEventListener('hashchange', function () { var h = location.hash.slice(1); if (h && h !== pick.value) show(h, true); });
+
+  var themeBtn = document.querySelector('[data-theme-btn]');
+  function isDark() { var a = document.documentElement.getAttribute('data-theme'); return a ? a === 'dark' : !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches); }
+  function paintTheme() { var d = isDark(); themeBtn.setAttribute('aria-pressed', String(d)); themeBtn.querySelector('span').textContent = d ? 'Claro' : 'Oscuro'; themeBtn.querySelector('use').setAttribute('href', '#i-' + (d ? 'sun' : 'moon')); document.querySelectorAll('meta[name=theme-color]').forEach(function (m) { m.content = d ? '#1E262A' : '#FFD85E'; }); }
+  themeBtn.addEventListener('click', function () { var next = isDark() ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', next); try { localStorage.setItem('vx-theme', next); } catch (e) {} paintTheme(); });
+  paintTheme();
+
+  show((location.hash || '').slice(1) || 'login', false);
+})();
+</script>
+</body>
+</html>
