@@ -1082,6 +1082,9 @@
         <button class="band" type="button" data-toast="${esc(home.academy && home.academy.title || "Academia VEXBIZ")}"><span class="band__title">Academia</span><img class="band__logo" src="assets/img/logo-oscuro.webp" width="46" height="18" alt="VEXBIZ"><span class="band__text">Aprende con nosotros y descubre más</span>${ico("chev-r")}</button>
         <button class="band band--alt" type="button" aria-hidden="true" tabindex="-1" data-toast="Técnicos certificados con homologación verificada"><span class="band__title">Técnicos certificados</span><img class="band__logo" src="assets/img/logo-claro.webp" width="46" height="18" alt="VEXBIZ"><span class="band__text">Homologación verificada</span>${ico("chev-r")}</button>
       </div>
+      <nav class="nicherail" aria-label="Nichos de VEXBIZ">
+        <div class="nicherail__track">${niches.slice().sort((a, b) => a.name.localeCompare(b.name, "es")).map((n) => `<a class="nicon reveal" href="#/n/${esc(n.id)}"><span class="nicon__bubble"><img src="assets/img/nichos/${esc(n.id)}.webp" width="96" height="96" alt="" loading="lazy" decoding="async"></span><span class="nicon__name">${esc(n.name)}</span></a>`).join("")}</div>
+      </nav>
       <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas">Ver todo${ico("chev-r")}</a></div><div class="rail" data-providers></div></section>
       <section class="sec" aria-labelledby="t-exp"><div class="sec__head"><h2 class="sec__title" id="t-exp">Explora por interés</h2><a class="seeall" href="#/n/todo" data-seeall>Ver todo${ico("chev-r")}</a></div><div class="rail" data-products></div></section>
       ${home.brands && home.brands.length ? `<section class="sec" aria-labelledby="t-brands"><div class="sec__head"><h2 class="sec__title" id="t-brands">Marcas en VEXBIZ</h2></div>

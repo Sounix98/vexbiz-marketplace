@@ -5,7 +5,7 @@
    - API en vivo (marketplace-api): primero red, caché si no hay conexión.
    - Cuenta (/auth, /account-api, cualquier pedido con Authorization): nunca pasa por la caché.
    Subir VERSION en cada entrega para que los teléfonos reciban la versión nueva. */
-const VERSION = 'vx-1.4.0';
+const VERSION = 'vx-1.5.0';
 const SHELL = `${VERSION}-shell`, DATA = `${VERSION}-data`, IMG = 'vx-img', API = 'vx-api';
 const PRECACHE = [
   './',
@@ -31,6 +31,17 @@ const PRECACHE = [
   'assets/img/banner-2.webp',
   'assets/img/banner-3.webp',
   'assets/img/logo-claro.webp',
+  'assets/img/nichos/aut.webp',
+  'assets/img/nichos/far.webp',
+  'assets/img/nichos/fer.webp',
+  'assets/img/nichos/gps.webp',
+  'assets/img/nichos/ind.webp',
+  'assets/img/nichos/mot.webp',
+  'assets/img/nichos/ref.webp',
+  'assets/img/nichos/res.webp',
+  'assets/img/nichos/sol.webp',
+  'assets/img/nichos/sup.webp',
+  'assets/img/nichos/tlc.webp',
   'assets/img/logo-oscuro.webp',
   'assets/img/prov-refrihogar.webp',
   'assets/js/api.js',

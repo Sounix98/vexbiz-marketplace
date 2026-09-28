@@ -2,6 +2,16 @@
 
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
+## 1.5.0 · 28/09 · Carrusel de nichos con íconos
+
+- Nuevo carrusel en Inicio, debajo de la píldora de Academia.
+  - Es una tarjeta blanca con los 11 nichos en orden alfabético.
+  - Cada nicho lleva su ícono en un círculo claro y el nombre debajo.
+  - Se desliza de lado y cada nicho abre su página.
+- Los íconos salen de `ICONOS NICHOS` (se usó la versión más reciente de cada uno, en `nuevos`). Quedaron como `assets/img/nichos/<nicho>.webp`, recortados, cuadrados, de 192 px y entre 8 y 17 KB cada uno. También se guardan para abrir sin conexión.
+- No se usaron Licorerías, Equipos de salud ni Repuestos de salud porque no están entre los 11 nichos del catálogo.
+- Movimiento: al pasar el mouse el círculo toma sombra y el ícono sube un poco con rebote; al tocar, el círculo se hunde. Los íconos entran escalonados como las tarjetas.
+
 ## 1.4.0 · 28/09 · Animaciones premium (tutoriales A1 a A8 de la guía del Home)
 
 Los ocho tutoriales de «Animaciones en el prototipo de Figma» de `GUIA HOME/guia-home-vexbiz.html`, llevados al código de la app con los tokens de movimiento (150 / 300 / 500 ms y las curvas estándar, entrada, salida y rebote). Con «reducir movimiento» activado en el sistema, todo queda quieto: sin autoplay, sin pausa, sin rebotes ni entradas escalonadas.
