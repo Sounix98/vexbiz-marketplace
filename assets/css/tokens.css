@@ -1,0 +1,234 @@
+/* ==========================================================================
+   VEXBIZ · Design Tokens — marketplace
+   Fuente única de verdad. Unifica los dos sistemas previos:
+     · vexbiz-landing/css/tokens.css  (Figma "VEXBIZ" · Style Guide)  — tema claro
+     · Guía de Análisis de Funcionamiento (Figma "VEXBIZ-WIREFRAMES") — tema oscuro
+   Todos los pares texto/fondo validados WCAG AA con contrast-check.py.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1 · PRIMITIVAS — valores crudos. Nunca se usan directamente en un componente.
+   -------------------------------------------------------------------------- */
+:root {
+  /* Ámbar de marca — el 500 es el amarillo VEXBIZ heredado (#e8b21e) */
+  --vx-amber-50:  #FFF8E6;
+  --vx-amber-100: #FFEFC2;
+  --vx-amber-200: #FFE49A;   /* era --vx-amber-300 en la landing */
+  --vx-amber-300: #FFD85E;   /* era --vx-amber-400 */
+  --vx-amber-400: #F5C32B;
+  --vx-amber-500: #E8B21E;   /* MARCA · logo, acento gráfico              */
+  --vx-amber-600: #BA8B18;   /* acento sobre claro, ≥3:1 (no-texto/grande) */
+  --vx-amber-700: #976F0E;   /* texto y enlaces ámbar sobre claro, ≥4.5:1  */
+  --vx-amber-800: #71540B;
+  --vx-amber-900: #4C3807;
+
+  /* Neutros — hue 200, el 800 es el charcoal de los wireframes (#2B3438) */
+  --vx-n-0:   #FFFFFF;
+  --vx-n-25:  #FAFBFB;
+  --vx-n-50:  #F4F6F7;
+  --vx-n-100: #E9ECEE;
+  --vx-n-200: #D6DBDE;
+  --vx-n-300: #B6BEC3;
+  --vx-n-400: #8B959C;   /* mínimo usable: 3.05:1 sobre blanco */
+  --vx-n-500: #6B767D;
+  --vx-n-600: #505B61;
+  --vx-n-700: #3B454A;
+  --vx-n-750: #364147;
+  --vx-n-800: #2B3438;   /* CHARCOAL · superficie del tema oscuro */
+  --vx-n-900: #262E34;
+  --vx-n-950: #1E262A;
+
+  /* Semánticos de estado — deliberadamente SIN ámbar (ver §3 del .md) */
+  --vx-success-700: #14703F;  --vx-success-100: #E6F4EC;  --vx-success-400: #61A07E;  --vx-success-300: #7FD3A6;
+  --vx-warning-700: #A1490A;  --vx-warning-100: #FDF0E1;  --vx-warning-400: #B68B5D;  --vx-warning-300: #F0B77A;
+  --vx-danger-700:  #A8261B;  --vx-danger-100:  #FDECEA;  --vx-danger-400:  #C0847E;  --vx-danger-300:  #F3A79F;
+  --vx-info-700:    #12558F;  --vx-info-100:    #E7F0FA;  --vx-info-400:    #7595B6;  --vx-info-300:    #94BDE6;
+}
+
+/* --------------------------------------------------------------------------
+   2 · SEMÁNTICOS — lo que se usa en los componentes. Cambian con el tema.
+   -------------------------------------------------------------------------- */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --vx-bg:            var(--vx-n-0);      /* fondo de página                */
+  --vx-bg-sunken:     var(--vx-n-50);     /* zonas hundidas, listas alternas*/
+  --vx-surface:       var(--vx-n-0);      /* tarjeta                        */
+  --vx-surface-2:     var(--vx-n-50);     /* hover de fila, cabecera tabla  */
+  --vx-surface-3:     var(--vx-n-100);    /* chip, input relleno            */
+
+  --vx-text:          var(--vx-n-900);    /* 13.8:1                          */
+  --vx-text-muted:    var(--vx-n-600);    /*  7.0:1                          */
+  --vx-text-disabled: var(--vx-n-400);    /*  3.1:1 — solo texto inactivo    */
+  --vx-text-invert:   var(--vx-n-0);
+  --vx-text-on-accent:var(--vx-n-900);    /* sobre ámbar 400/500 · 7.1:1     */
+
+  --vx-border:        var(--vx-n-200);    /* separadores decorativos         */
+  --vx-border-strong: var(--vx-n-400);    /* bordes de control · 3.05:1      */
+  --vx-border-accent: var(--vx-amber-600);
+
+  --vx-accent:        var(--vx-amber-500);/* relleno de marca                */
+  --vx-accent-hover:  var(--vx-amber-400);
+  --vx-accent-text:   var(--vx-amber-700);/* texto/enlace ámbar · 4.6:1      */
+  --vx-accent-soft:   var(--vx-amber-100);
+
+  --vx-focus:         var(--vx-amber-700);
+  --vx-focus-halo:    rgba(151, 111, 14, 0.28);
+
+  --vx-status-success-fg: var(--vx-success-700); --vx-status-success-bg: var(--vx-success-100); --vx-status-success-bd: var(--vx-success-400);
+  --vx-status-warning-fg: var(--vx-warning-700); --vx-status-warning-bg: var(--vx-warning-100); --vx-status-warning-bd: var(--vx-warning-400);
+  --vx-status-danger-fg:  var(--vx-danger-700);  --vx-status-danger-bg:  var(--vx-danger-100);  --vx-status-danger-bd:  var(--vx-danger-400);
+  --vx-status-info-fg:    var(--vx-info-700);    --vx-status-info-bg:    var(--vx-info-100);    --vx-status-info-bd:    var(--vx-info-400);
+  --vx-status-neutral-fg: var(--vx-n-600);       --vx-status-neutral-bg: var(--vx-n-100);       --vx-status-neutral-bd: var(--vx-n-400);
+
+  --vx-shadow-1: 0 1px 2px rgba(23, 30, 33, 0.06), 0 1px 3px rgba(23, 30, 33, 0.08);
+  --vx-shadow-2: 0 4px 8px rgba(23, 30, 33, 0.06), 0 8px 24px rgba(23, 30, 33, 0.10);
+  --vx-shadow-3: 0 12px 24px rgba(23, 30, 33, 0.10), 0 24px 48px rgba(23, 30, 33, 0.14);
+
+  --vx-scrim: rgba(30, 38, 42, 0.56);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --vx-bg:            var(--vx-n-950);
+  --vx-bg-sunken:     #181F22;
+  --vx-surface:       var(--vx-n-800);   /* charcoal de los wireframes */
+  --vx-surface-2:     var(--vx-n-750);
+  --vx-surface-3:     #3E4950;
+
+  --vx-text:          var(--vx-n-0);
+  --vx-text-muted:    var(--vx-n-300);
+  --vx-text-disabled: #747E85;
+  --vx-text-invert:   var(--vx-n-900);
+  --vx-text-on-accent:var(--vx-n-950);
+
+  --vx-border:        rgba(255, 255, 255, 0.12);
+  --vx-border-strong: #767F84;
+  --vx-border-accent: var(--vx-amber-400);
+
+  --vx-accent:        var(--vx-amber-500);
+  --vx-accent-hover:  var(--vx-amber-400);
+  --vx-accent-text:   var(--vx-amber-300);
+  --vx-accent-soft:   rgba(232, 178, 30, 0.16);
+
+  --vx-focus:         var(--vx-amber-300);
+  --vx-focus-halo:    rgba(255, 216, 94, 0.32);
+
+  --vx-status-success-fg: var(--vx-success-300); --vx-status-success-bg: rgba(127, 211, 166, 0.14); --vx-status-success-bd: rgba(127, 211, 166, 0.42);
+  --vx-status-warning-fg: var(--vx-warning-300); --vx-status-warning-bg: rgba(240, 183, 122, 0.14); --vx-status-warning-bd: rgba(240, 183, 122, 0.42);
+  --vx-status-danger-fg:  var(--vx-danger-300);  --vx-status-danger-bg:  rgba(243, 167, 159, 0.14); --vx-status-danger-bd:  rgba(243, 167, 159, 0.42);
+  --vx-status-info-fg:    var(--vx-info-300);    --vx-status-info-bg:    rgba(148, 189, 230, 0.14); --vx-status-info-bd:    rgba(148, 189, 230, 0.42);
+  --vx-status-neutral-fg: var(--vx-n-300);       --vx-status-neutral-bg: rgba(182, 190, 195, 0.12); --vx-status-neutral-bd: rgba(182, 190, 195, 0.36);
+
+  --vx-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --vx-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.46);
+  --vx-shadow-3: 0 24px 48px rgba(0, 0, 0, 0.55);
+
+  --vx-scrim: rgba(0, 0, 0, 0.64);
+}
+
+/* Respeta la preferencia del sistema mientras nadie haya elegido tema a mano */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --vx-bg: var(--vx-n-950); --vx-bg-sunken: #181F22;
+    --vx-surface: var(--vx-n-800); --vx-surface-2: var(--vx-n-750); --vx-surface-3: #3E4950;
+    --vx-text: var(--vx-n-0); --vx-text-muted: var(--vx-n-300); --vx-text-disabled: #747E85;
+    --vx-text-invert: var(--vx-n-900); --vx-text-on-accent: var(--vx-n-950);
+    --vx-border: rgba(255,255,255,.12); --vx-border-strong: #767F84; --vx-border-accent: var(--vx-amber-400);
+    --vx-accent-text: var(--vx-amber-300); --vx-accent-soft: rgba(232,178,30,.16);
+    --vx-focus: var(--vx-amber-300); --vx-focus-halo: rgba(255,216,94,.32);
+    --vx-status-success-fg: var(--vx-success-300); --vx-status-success-bg: rgba(127,211,166,.14); --vx-status-success-bd: rgba(127,211,166,.42);
+    --vx-status-warning-fg: var(--vx-warning-300); --vx-status-warning-bg: rgba(240,183,122,.14); --vx-status-warning-bd: rgba(240,183,122,.42);
+    --vx-status-danger-fg:  var(--vx-danger-300);  --vx-status-danger-bg:  rgba(243,167,159,.14); --vx-status-danger-bd:  rgba(243,167,159,.42);
+    --vx-status-info-fg:    var(--vx-info-300);    --vx-status-info-bg:    rgba(148,189,230,.14); --vx-status-info-bd:    rgba(148,189,230,.42);
+    --vx-status-neutral-fg: var(--vx-n-300);       --vx-status-neutral-bg: rgba(182,190,195,.12); --vx-status-neutral-bd: rgba(182,190,195,.36);
+    --vx-shadow-1: 0 1px 2px rgba(0,0,0,.40);
+    --vx-shadow-2: 0 8px 24px rgba(0,0,0,.46);
+    --vx-shadow-3: 0 24px 48px rgba(0,0,0,.55);
+    --vx-scrim: rgba(0,0,0,.64);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3 · TIPOGRAFÍA — dos familias, dos trabajos.
+       Titulares  → Host Grotesk        (Figma: "Host Grotesk")
+       Apoyo e UI → Inter, opsz 28      (Figma: familia "Inter 28pt")
+   -------------------------------------------------------------------------- */
+:root {
+  --vx-font-display: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --vx-font-body:    "Inter", "Inter 28pt", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --vx-font-mono:    ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+
+  /* Eje óptico de Inter. 28 = familia "Inter 28pt" de Figma. */
+  --vx-opsz-body: 28;
+
+  --vx-fw-light: 300; --vx-fw-regular: 400; --vx-fw-medium: 500;
+  --vx-fw-semibold: 600; --vx-fw-bold: 700; --vx-fw-extrabold: 800;
+
+  /* Escala móvil-primero: el mínimo es el teléfono, el máximo el diseño a 1440 */
+  --vx-fs-display: clamp(2.50rem, 1.60rem + 3.9vw, 4.50rem);  /* 40 → 72 */
+  --vx-fs-h1:      clamp(2.00rem, 1.45rem + 2.4vw, 3.25rem);  /* 32 → 52 */
+  --vx-fs-h2:      clamp(1.625rem, 1.25rem + 1.6vw, 2.50rem); /* 26 → 40 */
+  --vx-fs-h3:      clamp(1.375rem, 1.13rem + 1.0vw, 1.875rem);/* 22 → 30 */
+  --vx-fs-h4:      clamp(1.125rem, 1.02rem + 0.5vw, 1.375rem);/* 18 → 22 */
+  --vx-fs-lead:    clamp(1.0625rem, 1.01rem + 0.25vw, 1.25rem);/*17 → 20 */
+  --vx-fs-body:    1rem;      /* 16 · nunca menos en un campo de formulario */
+  --vx-fs-sm:      0.875rem;  /* 14 · metadatos, ayuda del campo            */
+  --vx-fs-xs:      0.8125rem; /* 13 · MÍNIMO ABSOLUTO. Nada por debajo.     */
+
+  --vx-lh-tight: 1.1;   /* display                */
+  --vx-lh-snug:  1.25;  /* titulares              */
+  --vx-lh-body:  1.55;  /* párrafo                */
+  --vx-lh-loose: 1.7;   /* texto largo, legales   */
+
+  --vx-ls-display: -0.02em;
+  --vx-ls-heading: -0.01em;
+  --vx-ls-body:     0em;
+  --vx-ls-caps:     0.06em;
+}
+
+/* --------------------------------------------------------------------------
+   4 · ESPACIADO · RADIOS · LAYOUT
+   -------------------------------------------------------------------------- */
+:root {
+  --vx-sp-0: 0;        --vx-sp-1: 0.25rem;  --vx-sp-2: 0.5rem;
+  --vx-sp-3: 0.75rem;  --vx-sp-4: 1rem;     --vx-sp-5: 1.5rem;
+  --vx-sp-6: 2rem;     --vx-sp-7: 2.5rem;   --vx-sp-8: 3.5rem;
+  --vx-sp-9: 5rem;     --vx-sp-10: 7rem;
+
+  --vx-r-xs: 6px;   --vx-r-sm: 10px;  --vx-r-md: 14px;
+  --vx-r-lg: 20px;  --vx-r-xl: 28px;  --vx-r-2xl: 40px;
+  --vx-r-pill: 999px;
+
+  --vx-container: 1440px;   /* ancho útil del marketplace (la landing usa 1625) */
+  --vx-container-narrow: 760px;
+  --vx-gutter: clamp(1rem, 4vw, 3rem);
+  --vx-header-h: 60px;          /* teléfono */
+  --vx-header-h-lg: 76px;       /* escritorio */
+  --vx-tabbar-h: 60px;          /* barra inferior del teléfono */
+  --vx-tap: 44px;               /* objetivo táctil mínimo. No negociable. */
+
+  --vx-z-base: 0; --vx-z-sticky: 20; --vx-z-header: 60;
+  --vx-z-sheet: 80; --vx-z-modal: 100; --vx-z-toast: 120;
+}
+
+/* --------------------------------------------------------------------------
+   5 · MOTION — tres duraciones, tres curvas. Nada fuera de aquí.
+   -------------------------------------------------------------------------- */
+:root {
+  --vx-dur-fast: 150ms;   /* hover, foco, cambio de estado de un control */
+  --vx-dur:      300ms;   /* apertura de panel, entrada de tarjeta       */
+  --vx-dur-slow: 500ms;   /* hoja que sube, transición de sección        */
+
+  --vx-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --vx-ease-enter:    cubic-bezier(0, 0, 0.2, 1);
+  --vx-ease-exit:     cubic-bezier(0.4, 0, 1, 1);
+  --vx-ease-bounce:   cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --vx-dur-fast: 1ms; --vx-dur: 1ms; --vx-dur-slow: 1ms; }
+}
