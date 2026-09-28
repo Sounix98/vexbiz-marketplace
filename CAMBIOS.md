@@ -2,6 +2,12 @@
 
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
+## 1.5.1 · 28/09 · Carrusel de nichos sin tarjeta
+
+- Se retiró la tarjeta blanca que contenía el carrusel: los íconos van directo sobre el fondo del Inicio. El primer círculo queda alineado con el margen de la pantalla.
+- Los círculos pasan a blanco con borde fino y sombra suave, para que se despeguen del fondo gris (en tema oscuro, sobre la superficie oscura).
+- Todo lo demás sigue igual: se desliza de lado, cada nicho abre su página, y conserva el hover, el toque y la entrada escalonada.
+
 ## 1.5.0 · 28/09 · Carrusel de nichos con íconos
 
 - Nuevo carrusel en Inicio, debajo de la píldora de Academia.

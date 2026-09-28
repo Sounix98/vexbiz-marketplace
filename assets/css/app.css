@@ -838,15 +838,12 @@ a.row, button.row, .niche-row, .opt { transition: background-color var(--vx-dur-
 @media (prefers-reduced-motion: reduce) { .sheet > *:not(.sheet__grab) { animation: none; } }
 
 /* ---------- 20 · Carrusel de nichos con ícono (Inicio, bajo la banda Academia; íconos: ICONOS NICHOS) ---------- */
-.nicherail {
-  margin-inline: var(--app-gutter); padding-block: var(--vx-sp-3);
-  border-radius: var(--vx-r-lg); background: var(--app-card); border: 1px solid var(--app-line); box-shadow: var(--vx-shadow-1);
-  overflow: hidden;
-}
+.nicherail { margin: 0; }   /* sin tarjeta: los íconos van directo sobre el fondo */
 .nicherail__track {
   display: flex; gap: 2px;
   overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; overscroll-behavior-x: contain;
-  padding-inline: var(--vx-sp-2); scroll-padding-inline: var(--vx-sp-2);
+  padding: var(--vx-sp-1) calc(var(--app-gutter) - 6px) var(--vx-sp-2);   /* aire para la sombra del hover; el primer círculo alinea con el margen */
+  scroll-padding-inline: calc(var(--app-gutter) - 6px);
 }
 .nicherail__track::-webkit-scrollbar { display: none; }
 .nicon {
@@ -857,14 +854,14 @@ a.row, button.row, .niche-row, .opt { transition: background-color var(--vx-dur-
 .nicon__bubble {
   width: 64px; height: 64px; flex: none; border-radius: 50%;
   display: grid; place-items: center;
-  background: var(--vx-surface-2); border: 1px solid var(--app-line);
+  background: var(--app-card); border: 1px solid var(--app-line); box-shadow: var(--vx-shadow-1);
   transition: transform var(--vx-dur-fast) var(--vx-ease-standard), box-shadow var(--vx-dur-fast) var(--vx-ease-standard), background-color var(--vx-dur-fast) var(--vx-ease-standard);
 }
 .nicon__bubble img { width: 50px; height: 50px; object-fit: contain; transition: transform var(--vx-dur) var(--vx-ease-bounce); }
 .nicon__name { font-size: var(--vx-fs-xs); font-weight: 700; line-height: 1.2; color: var(--vx-text); text-wrap: balance; }
 .nicon:active .nicon__bubble { transform: scale(0.94); }
 @media (hover: hover) {
-  .nicon:hover .nicon__bubble { background: var(--app-card); box-shadow: var(--vx-shadow-2); }
+  .nicon:hover .nicon__bubble { box-shadow: var(--vx-shadow-2); }
   .nicon:hover .nicon__bubble img { transform: translateY(-2px) scale(1.06); }
 }
 .nicon:focus-visible { outline-offset: 0; }
