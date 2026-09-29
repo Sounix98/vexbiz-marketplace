@@ -223,17 +223,13 @@ fieldset.group { min-width: 0; }
   background: var(--app-card); color: var(--vx-text); border: 1px solid var(--app-line); box-shadow: var(--vx-shadow-1);
   transition: box-shadow var(--vx-dur-fast) var(--vx-ease-standard);
 }
-.banner--ink { background: var(--vx-n-800); color: var(--vx-n-0); border-color: var(--vx-n-800); }
 .banner__copy { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .banner__kicker { font-size: var(--vx-fs-xs); font-weight: 600; letter-spacing: var(--vx-ls-caps); text-transform: uppercase; color: var(--vx-text-muted); }
-.banner--ink .banner__kicker { color: var(--vx-n-200); }
 .banner__title { font-size: var(--vx-fs-h4); font-weight: 700; line-height: 1.15; letter-spacing: var(--vx-ls-heading); text-wrap: balance; }
 .banner__sub { font-size: var(--vx-fs-xs); color: var(--vx-text-muted); line-height: 1.35; }
-.banner--ink .banner__sub { color: var(--vx-n-200); }
 .banner__cta { display: inline-flex; align-items: center; gap: 2px; margin-top: 2px; font-size: var(--vx-fs-sm); font-weight: 700; }
 .banner__cta .ico { width: 16px; height: 16px; }
 .banner__art { width: 104px; height: 104px; border-radius: var(--vx-r-lg); display: grid; place-items: center; overflow: hidden; background: var(--app-media); color: var(--vx-text-muted); }
-.banner--ink .banner__art { background: var(--vx-n-700); color: var(--vx-n-100); }
 .banner__art img { max-width: 84%; max-height: 84%; width: auto; height: auto; object-fit: contain; }
 .banner__art .ico { width: 40px; height: 40px; }
 .dots { display: flex; justify-content: center; align-items: center; margin-block: calc(var(--vx-sp-2) * -1); }
@@ -877,3 +873,20 @@ a.row, button.row, .niche-row, .opt { transition: background-color var(--vx-dur-
 .nicon:focus-visible { outline-offset: 0; }
 
 .prov__count--soon { color: var(--vx-n-200); font-weight: 500; }
+
+/* ---------- 21 · Banners del hero en el azul índigo del Figma (321:962), un tono por banner ---------- */
+.banner--b1, .banner--b2, .banner--b3 { color: var(--vx-n-0); border-color: transparent; box-shadow: var(--vx-shadow-2); position: relative; overflow: hidden; isolation: isolate; }
+.banner--b1 { background: linear-gradient(115deg, var(--vx-indigo-900) 0%, var(--vx-indigo-700) 100%); }            /* base del Figma */
+.banner--b2 { background: linear-gradient(115deg, var(--vx-indigo-950) 0%, var(--vx-indigo-800) 100%); }            /* más oscuro */
+.banner--b3 { background: linear-gradient(115deg, var(--vx-indigo-800) 0%, var(--vx-indigo-600) 100%); }            /* más claro */
+/* brillo suave arriba a la derecha, detrás de la foto */
+.banner--b1::before, .banner--b2::before, .banner--b3::before {
+  content: ""; position: absolute; z-index: -1; right: -40px; top: -60px; width: 220px; height: 220px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(94, 108, 255, 0.45), transparent);
+}
+.banner--b1 .banner__kicker, .banner--b2 .banner__kicker, .banner--b3 .banner__kicker,
+.banner--b1 .banner__sub, .banner--b2 .banner__sub, .banner--b3 .banner__sub { color: var(--vx-n-200); }
+.banner__accent { font-style: normal; color: var(--vx-accent-text); }
+.banner--b1 .banner__accent, .banner--b2 .banner__accent, .banner--b3 .banner__accent { display: block; color: var(--vx-amber-300); }
+.banner--b1 .banner__art, .banner--b2 .banner__art, .banner--b3 .banner__art { background: var(--vx-n-0); color: var(--vx-indigo-700); box-shadow: 0 8px 20px rgba(9, 12, 40, 0.35); }
+@media (hover: hover) { a.banner--b1:hover, button.banner--b2:hover, button.banner--b3:hover { box-shadow: var(--vx-shadow-3); } }

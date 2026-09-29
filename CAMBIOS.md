@@ -2,6 +2,18 @@
 
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
+## 1.7.0 · 29/09 · Banners del hero en el azul del Figma
+
+- Los tres banners del carrusel del Inicio pasan al degradado índigo de la maqueta de Figma (nodo 321:962). El azul se midió de los banners exportados del Figma, de #121B3C a #221A8F.
+- Cada banner lleva su propio tono del mismo azul, para distinguirlos al deslizar:
+  - Marketplace: el tono base del Figma.
+  - Técnicos: más oscuro.
+  - Vende en VEXBIZ: más claro.
+- El título va en dos partes, como en el Figma: la primera en blanco y la segunda en ámbar («en un solo lugar», «listos para ayudarte», «y expande tu negocio»). El ámbar se usa como color de marca, no de estado.
+- La foto del producto va en un recuadro blanco con sombra, y un brillo índigo suave queda detrás, arriba a la derecha.
+- Contraste medido en el tono más claro: blanco 9,8:1, texto secundario 7,0:1 y ámbar 7,1:1, todos AA. Los banners son iguales en tema claro y oscuro.
+- Tokens nuevos en `tokens.css`: `--vx-indigo-950` a `--vx-indigo-600`, solo para piezas promocionales.
+
 ## 1.6.1 · 28/09 · Tab bar: nombre solo en la pestaña activa (B2 reabierta)
 
 - Las pestañas inactivas muestran solo el ícono, centrado. La activa muestra el ícono y su nombre debajo, dentro de la píldora ámbar.

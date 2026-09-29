@@ -26,6 +26,12 @@
   --vx-n-0:   #FFFFFF;
   --vx-n-25:  #FAFBFB;
   --vx-n-50:  #F4F6F7;
+  /* Índigo de los banners del Figma (321:962), medido de los exportes: solo para piezas promocionales */
+  --vx-indigo-950: #0D1430;
+  --vx-indigo-900: #121B3C;
+  --vx-indigo-800: #161B6C;
+  --vx-indigo-700: #221A8F;
+  --vx-indigo-600: #2C2FB0;
   --vx-n-100: #E9ECEE;
   --vx-n-200: #D6DBDE;
   --vx-n-300: #B6BEC3;

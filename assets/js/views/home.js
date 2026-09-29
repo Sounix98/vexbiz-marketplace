@@ -44,8 +44,9 @@ export default {
       const p = feats[i], src = p && p.images && p.images[0];
       return `<span class="banner__art" aria-hidden="true">${src ? img(src, '', i === 0 ? 'fetchpriority="high"' : '', 200) : ico(icon)}</span>`;
     };
+    // Título en dos partes como el Figma: la segunda línea va en ámbar
     const banner = (tag, attrs, cls, kicker, title, sub, cta, artHtml) =>
-      `<${tag} class="banner${cls}" ${attrs}><span class="banner__copy"><span class="banner__kicker">${kicker}</span><span class="banner__title">${title}</span><span class="banner__sub">${sub}</span><span class="banner__cta">${cta}${ico('chev-r')}</span></span>${artHtml}</${tag}>`;
+      `<${tag} class="banner${cls}" ${attrs}><span class="banner__copy"><span class="banner__kicker">${kicker}</span><span class="banner__title">${title[0]} <em class="banner__accent">${title[1]}</em></span><span class="banner__sub">${sub}</span><span class="banner__cta">${cta}${ico('chev-r')}</span></span>${artHtml}</${tag}>`;
     return `<div class="home">
       <div class="topdock" data-dock><div class="hero__bar">
           ${auth.signedIn() ? `<a class="avatar avatar--in" href="#/cuenta" aria-label="Hola, ${esc(auth.firstName())} · Mi cuenta">${esc(initials((auth.user() || {}).full_name || auth.firstName()))}</a>` : `<a class="avatar" href="${auth.available() ? '#/login?next=%23%2Finicio' : '#/cuenta'}" aria-label="${auth.available() ? 'Iniciar sesión' : 'Mi cuenta'}">${ico('user')}</a>`}
@@ -60,9 +61,9 @@ export default {
         </div>
         <section class="banners" aria-roledescription="carrusel" aria-label="Promociones">
           <div class="banners__track" data-banners tabindex="0" aria-label="Promociones, desliza para ver más">
-            ${banner('a', 'href="#/categorias"', '', 'Marketplace', 'Todo para tu negocio en un solo lugar', 'Repuestos, equipos y suministros de tiendas verificadas.', 'Explorar categorías', art(0, 'grid'))}
-            ${banner('button', 'type="button" data-toast="Técnicos certificados: instalación, mantenimiento y reparación"', '', 'Servicios', 'Técnicos certificados cerca de ti', 'Instalación, mantenimiento y reparación con homologación verificada.', 'Conocer técnicos', art(1, 'tools'))}
-            ${banner('button', 'type="button" data-toast="Vender en VEXBIZ: registro de proveedor en ve.vexbiz.com"', ' banner--ink', 'Para proveedores', 'Vende en <span translate="no">VEXBIZ</span>', 'Sin cuota de entrada: pagas una comisión solo sobre lo que vendes.', 'Publicar mi catálogo', art(2, 'store'))}
+            ${banner('a', 'href="#/categorias"', ' banner--b1', 'Marketplace', ['Todo para tu negocio', 'en un solo lugar'], 'Repuestos, equipos y suministros de tiendas verificadas.', 'Explorar categorías', art(0, 'grid'))}
+            ${banner('button', 'type="button" data-toast="Técnicos certificados: instalación, mantenimiento y reparación"', ' banner--b2', 'Servicios', ['Técnicos certificados', 'listos para ayudarte'], 'Instalación, mantenimiento y reparación con homologación verificada.', 'Conocer técnicos', art(1, 'tools'))}
+            ${banner('button', 'type="button" data-toast="Vender en VEXBIZ: registro de proveedor en ve.vexbiz.com"', ' banner--b3', 'Para proveedores', ['Vende en <span translate="no">VEXBIZ</span>', 'y expande tu negocio'], 'Sin cuota de entrada: pagas una comisión solo sobre lo que vendes.', 'Publicar mi catálogo', art(2, 'store'))}
           </div>
           <div class="dots" data-dots>${[1, 2, 3].map((n) => `<button class="dot" type="button" aria-label="Promoción ${n} de 3"${n === 1 ? ' aria-current="true"' : ''}></button>`).join('')}${reduce ? '' : `<button class="dots__pause" type="button" data-pause aria-pressed="false" aria-label="Pausar el movimiento de las promociones">${ico('pause')}</button>`}</div>
         </section>
