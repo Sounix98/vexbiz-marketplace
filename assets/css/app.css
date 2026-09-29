@@ -890,3 +890,26 @@ a.row, button.row, .niche-row, .opt { transition: background-color var(--vx-dur-
 .banner--b1 .banner__accent, .banner--b2 .banner__accent, .banner--b3 .banner__accent { display: block; color: var(--vx-amber-300); }
 .banner--b1 .banner__art, .banner--b2 .banner__art, .banner--b3 .banner__art { background: var(--vx-n-0); color: var(--vx-indigo-700); box-shadow: 0 8px 20px rgba(9, 12, 40, 0.35); }
 @media (hover: hover) { a.banner--b1:hover, button.banner--b2:hover, button.banner--b3:hover { box-shadow: var(--vx-shadow-3); } }
+
+/* ---------- 22 · Del tablero de Pinterest (29/09): proveedor con CTA blanco y accesos rápidos en Cuenta ---------- */
+/* tarjeta de proveedor con imagen primero, marco interior y CTA blanco */
+.prov--v2 { aspect-ratio: 194 / 300; justify-content: flex-end; align-items: stretch; text-align: left; gap: var(--vx-sp-2); padding: var(--vx-sp-2); border-radius: var(--vx-r-lg); }
+.prov--v2::before { background: linear-gradient(180deg, transparent 38%, rgba(20, 26, 30, 0.95) 64%); }
+.prov--v2::after { content: ""; position: absolute; inset: 5px; border-radius: calc(var(--vx-r-lg) - 4px); border: 1px solid rgba(255, 255, 255, 0.22); pointer-events: none; }
+.prov--v2 .prov__stage { position: absolute; inset: 0 0 46% 0; display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 0%, var(--vx-n-700), var(--vx-n-800)); }
+.prov--v2 .prov__stage .prov__logo, .prov--v2 .prov__stage .prov__mono { position: static; inset: auto; height: auto; background: none; }
+.prov--v2 .prov__info { position: relative; display: flex; flex-direction: column; gap: 4px; padding-inline: var(--vx-sp-2); }
+.prov--v2 .prov__chip { align-self: flex-start; }
+.prov--v2 .prov__name { font-size: var(--vx-fs-body); font-weight: 700; line-height: 1.15; text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.prov__cta { position: relative; display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 36px; border-radius: var(--vx-r-pill); background: var(--vx-n-0); color: var(--vx-n-900); font-size: var(--vx-fs-sm); font-weight: 700; }
+.prov__cta .ico { width: 14px; height: 14px; }
+
+/* accesos rápidos en Cuenta */
+.quick-acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--vx-sp-2); padding: var(--vx-sp-4) var(--app-gutter) 0; }
+.qa { display: flex; flex-direction: column; align-items: center; gap: var(--vx-sp-2); min-height: var(--vx-tap); background: none; border: 0; font: inherit; color: var(--vx-text); cursor: pointer; }
+.qa__ico { position: relative; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--app-card); border: 1px solid var(--app-line); box-shadow: var(--vx-shadow-1); transition: box-shadow var(--vx-dur-fast) var(--vx-ease-standard), transform var(--vx-dur-fast) var(--vx-ease-standard); }
+.qa__ico .ico { width: 22px; height: 22px; }
+.qa__n { position: absolute; top: -2px; right: -2px; min-width: 20px; height: 20px; padding-inline: 5px; border-radius: 10px; display: grid; place-items: center; background: var(--vx-n-800); color: var(--vx-n-0); font-size: var(--vx-fs-xs); font-weight: 700; font-variant-numeric: tabular-nums; }
+.qa__t { font-size: var(--vx-fs-xs); font-weight: 700; }
+.qa:active .qa__ico { transform: scale(0.94); }
+@media (hover: hover) { .qa:hover .qa__ico { box-shadow: var(--vx-shadow-2); } }

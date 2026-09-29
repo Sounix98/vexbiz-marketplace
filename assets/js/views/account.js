@@ -36,18 +36,18 @@ export const cuenta = {
     return rootHead('Cuenta') +
       profile() +
       `      ${canInstall ? `<div class="install" style="margin-top:16px" data-install-card><img class="install__ico" src="assets/icons/icon-192.png" alt="" width="44" height="44"><span class="install__body"><b>Instala VEXBIZ</b><span>Ábrela desde tu pantalla de inicio, también sin conexión.</span></span>${btn('Instalar', 'vx-btn--primary', 'data-install')}</div>` : ''}
-      <p class="label" style="padding:20px var(--app-gutter) 8px">Mis compras</p><div class="list">
-        ${row('#/pedidos', 'box', 'Mis pedidos', auth.signedIn() ? 'Tus compras en VEXBIZ' : 'Estado y comprobante de pago', auth.signedIn() ? '' : `<span class="count">${orders.list().length}</span>`)}
-        ${row('#/favoritos', 'heart', 'Favoritos', 'Productos guardados', `<span class="count">${favs.list().length}</span>`)}
-        ${row('', 'pin', 'Mis direcciones', `<span data-city>${esc(prefs.city())}</span>`, '', ' data-open="loc"')}
-      </div>
+      <nav class="quick-acts" aria-label="Accesos rápidos">
+        <a class="qa" href="#/pedidos"><span class="qa__ico">${ico('box')}${!auth.signedIn() && orders.list().length ? `<span class="qa__n">${orders.list().length}</span>` : ''}</span><span class="qa__t">Pedidos</span></a>
+        <a class="qa" href="#/favoritos"><span class="qa__ico">${ico('heart')}${favs.list().length ? `<span class="qa__n">${favs.list().length}</span>` : ''}</span><span class="qa__t">Favoritos</span></a>
+        <button class="qa" type="button" data-open="loc"><span class="qa__ico">${ico('pin')}</span><span class="qa__t">Direcciones</span></button>
+        <button class="qa" type="button" data-toast="Soporte 24/7: ayuda con pedidos, pagos y reclamos"><span class="qa__ico">${ico('help')}</span><span class="qa__t">Soporte</span></button>
+      </nav>
       <p class="label" style="padding:20px var(--app-gutter) 8px">Preferencias</p><div class="list">
         <button class="row" type="button" role="switch" aria-checked="${isDark()}" data-theme-toggle><span class="row__thumb row__thumb--ico">${ico('moon')}</span><span class="row__body"><span class="row__title">Tema oscuro</span><span class="row__sub">Se guarda en este dispositivo</span></span><span class="switch" aria-hidden="true"></span></button>
       </div>
       <p class="label" style="padding:20px var(--app-gutter) 8px">VEXBIZ</p><div class="list">
         ${row('', 'book', 'Academia VEXBIZ', 'Cursos y certificaciones', '', ' data-toast="Academia VEXBIZ: cursos para técnicos y comercios"')}
         ${row('', 'store', 'Vender en VEXBIZ', 'Publica tu catálogo', '', ' data-toast="Vender en VEXBIZ: registro de proveedor en ve.vexbiz.com"')}
-        ${row('', 'help', 'Soporte', 'Ayuda y reclamos', '', ' data-toast="Soporte 24/7: ayuda con pedidos, pagos y reclamos"')}
         ${auth.demo() ? row('acceso-demo.html', 'lock', 'Estados de acceso', 'Demo: todos los estados de Iniciar sesión y Crear cuenta') : ''}
       </div>
       <p class="label" style="padding:20px var(--app-gutter) 8px">Catálogo</p><div class="list">

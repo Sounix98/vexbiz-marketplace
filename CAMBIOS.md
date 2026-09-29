@@ -2,6 +2,20 @@
 
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
+## 1.8.0 · 29/09 · Dos ideas del tablero de Pinterest «UI DESIGN WZ68»
+
+Revisé 50 de los 197 pines; los demás piden iniciar sesión en Pinterest. Se programaron 4 propuestas con pruebas de antes y después, y se aplicaron las 2 elegidas.
+
+- **Tarjeta de proveedor** (pines 17, 45, 49 y 50):
+  - Más alta, con la imagen o el logo arriba, un marco interior fino y el nombre sobre la imagen.
+  - Debajo, el nicho y los productos, más un botón blanco «Ver tienda» a todo el ancho. Toda la tarjeta sigue abriendo la tienda.
+- **Cuenta** (pin 25): Pedidos, Favoritos, Direcciones y Soporte pasan a ser 4 accesos rápidos circulares debajo del perfil, en lugar de la lista «Mis compras».
+  - Pedidos y Favoritos muestran su número cuando hay algo.
+  - Direcciones abre la hoja de ciudad y Soporte da el mismo aviso de antes.
+- **No aplicadas** (quedan en la rama `propuestas-pinterest`):
+  - P1: botón redondo «Añadir» en cada tarjeta de producto.
+  - P2: usar los íconos de nicho como filtro en lugar de las pestañas de texto.
+
 ## 1.7.0 · 29/09 · Banners del hero en el azul del Figma
 
 - Los tres banners del carrusel del Inicio pasan al degradado índigo de la maqueta de Figma (nodo 321:962). El azul se midió de los banners exportados del Figma, de #121B3C a #221A8F.

@@ -63,10 +63,14 @@ export function storeLogo(s, cls = 'store-card__logo') {
 
 export function provCard(s, cover) {
   const bg = cover ? ` style="background-image:url(${esc(cover)})"` : '';
-  return `<a class="prov reveal" href="#/s/${esc(s.id)}"${bg}>
-    ${cover ? `<span class="sr">${esc(s.name)}</span>` : (s.logo ? `<span class="prov__logo">${img(s.logo, '')}</span>` : `<span class="prov__mono" aria-hidden="true">${esc(initials(s.name))}</span>`) + ico('check-circle', 'prov__check') + `<span class="prov__name" translate="no">${esc(s.name)}</span>`}
-    <span class="prov__chip">${esc(storeNiches(s)[0] || 'Tienda verificada')}</span>
-    <span class="prov__count${s.count > 0 ? '' : ' prov__count--soon'}">${storeCount(s)}</span></a>`;
+  // Tablero de Pinterest (#17 #45 #49 #50): imagen primero, marco interior, nombre sobre la imagen y CTA blanco a todo el ancho
+  return `<a class="prov prov--v2 reveal" href="#/s/${esc(s.id)}"${bg}>
+    ${cover ? '' : `<span class="prov__stage">${s.logo ? `<span class="prov__logo">${img(s.logo, '')}</span>` : `<span class="prov__mono" aria-hidden="true">${esc(initials(s.name))}</span>`}</span>`}
+    ${cover ? '' : ico('check-circle', 'prov__check')}
+    <span class="prov__info"><span class="prov__chip">${esc(storeNiches(s)[0] || 'Tienda verificada')}</span>
+      <span class="prov__name" translate="no">${esc(s.name)}</span>
+      <span class="prov__count${s.count > 0 ? '' : ' prov__count--soon'}">${storeCount(s)}</span></span>
+    <span class="prov__cta" aria-hidden="true">Ver tienda${ico('chev-r', 'ico--xs')}</span></a>`;
 }
 
 export function storeCard(s, extraMeta = '') {
