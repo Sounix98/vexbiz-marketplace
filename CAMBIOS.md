@@ -7,6 +7,10 @@ Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `inde
 
 
 
+
+## 1.9.5 · 30/09/2026
+
+- Precio de la tarjeta de producto otro 10 % más pequeño (de 20 px en teléfono a 31 px en pantalla ancha).
 ## 1.9.4 · 30/09/2026
 
 - Precio de la tarjeta de producto un 10 % más pequeño que en la 1.9.3 (de 22 px en teléfono a 34 px en pantalla ancha).
