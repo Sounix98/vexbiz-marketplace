@@ -316,8 +316,9 @@ fieldset.group { min-width: 0; }
 .pcard:hover { box-shadow: var(--vx-shadow-2); }
 .pcard:active { transform: scale(0.985); }
 .pcard__link { display: flex; flex-direction: column; flex: 1; text-align: left; }
-.pcard__media { aspect-ratio: 1 / 1; padding: var(--vx-sp-4); display: grid; place-items: center; background: var(--app-media); }   /* auditoría 28/09: fotos 1:1 */
-.pcard__media img { max-height: 100%; max-width: 100%; width: auto; height: auto; object-fit: contain; }
+.pcard__media { position: relative; aspect-ratio: 1 / 1; min-height: 0; overflow: hidden; display: grid; place-items: center; background: var(--app-media); }   /* auditoría 28/09: fotos 1:1 */
+/* la foto nunca estira la tarjeta: se ajusta dentro del cuadro 1:1 (una foto muy alta inflaba todo el carril) */
+.pcard__media img { position: absolute; inset: var(--vx-sp-4); width: calc(100% - 2 * var(--vx-sp-4)); height: calc(100% - 2 * var(--vx-sp-4)); max-width: none; max-height: none; object-fit: contain; }
 .grid > .pcard { content-visibility: auto; contain-intrinsic-size: auto 360px; }
 .pcard__body { padding: var(--vx-sp-3) var(--vx-sp-3) var(--vx-sp-2); display: flex; flex-direction: column; gap: 6px; flex: 1; }
 .pcard__name {
@@ -451,7 +452,8 @@ fieldset.group { min-width: 0; }
 
 /* ---------- 12 · Ficha de producto ---------- */
 .pd-media { position: relative; aspect-ratio: 1 / 1; max-height: 340px; margin: 0 var(--app-gutter); padding: var(--vx-sp-6); border-radius: var(--vx-r-lg); background: var(--app-media); display: grid; place-items: center; }
-.pd-media img { max-height: 100%; max-width: 100%; width: auto; height: auto; object-fit: contain; }
+.pd-media { overflow: hidden; }
+.pd-media img { position: absolute; inset: var(--vx-sp-6); width: calc(100% - 2 * var(--vx-sp-6)); height: calc(100% - 2 * var(--vx-sp-6)); max-width: none; max-height: none; object-fit: contain; }
 .pd { padding: var(--vx-sp-4) var(--app-gutter) 0; display: flex; flex-direction: column; gap: var(--vx-sp-3); }
 .pd__name { margin: 0; font-size: var(--vx-fs-h3); font-weight: 700; line-height: 1.2; letter-spacing: var(--vx-ls-heading); text-wrap: balance; }
 .pd__name:focus { outline: none; }
@@ -827,8 +829,8 @@ a.row, button.row, .niche-row, .opt { transition: background-color var(--vx-dur-
 .pcard-price { font-family: inherit; cursor: pointer; }
 .quick__acts { display: flex; align-items: center; }
 .quick { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: var(--vx-sp-4); align-items: start; }
-.quick__media { aspect-ratio: 1 / 1; padding: var(--vx-sp-3); border-radius: var(--vx-r-lg); background: var(--app-media); display: grid; place-items: center; color: var(--vx-text-muted); }
-.quick__media img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+.quick__media { position: relative; overflow: hidden; aspect-ratio: 1 / 1; padding: var(--vx-sp-3); border-radius: var(--vx-r-lg); background: var(--app-media); display: grid; place-items: center; color: var(--vx-text-muted); }
+.quick__media img { position: absolute; inset: var(--vx-sp-3); width: calc(100% - 2 * var(--vx-sp-3)); height: calc(100% - 2 * var(--vx-sp-3)); max-width: none; max-height: none; object-fit: contain; }
 .quick__media .ico { width: 36px; height: 36px; }
 .quick__body { display: flex; flex-direction: column; gap: var(--vx-sp-2); min-width: 0; }
 .quick__name { margin: 0; font-size: var(--vx-fs-body); font-weight: 600; line-height: 1.3; text-wrap: pretty; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

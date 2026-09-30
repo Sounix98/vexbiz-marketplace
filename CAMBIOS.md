@@ -3,6 +3,10 @@
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
 
+
+## 1.9.1 · 30/09/2026
+
+- Corregido: una foto de producto muy alta estiraba todas las tarjetas del carril (quedaba un hueco grande entre la marca y el precio, se vio en Ofertas relámpago). Ahora la foto se ajusta dentro de su cuadro 1:1 y la tarjeta mide lo mismo con cualquier foto. Mismo arreglo en la ficha de producto y en la vista rápida.
 ## 1.9.0 · 30/09/2026
 
 - Tarjeta de proveedor: el nicho ("Refrigeración", etc.) ya no va en burbuja, queda como texto.
