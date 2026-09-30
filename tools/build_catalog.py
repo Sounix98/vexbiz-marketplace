@@ -74,7 +74,8 @@ def fold(s):
 
 def compact_from_raw(s):
     prods, seen = [], set()
-    for code, lst in s['listings'].items():
+    lists = list(s['listings'].items()) + [(x.get('_nc') or '', [x]) for x in s.get('extra', [])]
+    for code, lst in lists:
         for p in lst:
             if p['slug'] in seen:
                 continue
@@ -92,10 +93,21 @@ def compact_from_raw(s):
     sf = {}
     for sec in (s.get('storefront') or {}).get('sections', []):
         if sec['key'] != 'global_nav':
-            sf[sec['key']] = sec.get('content') or sec.get('best_sellers') or sec.get('brands') or sec.get('stores') or sec.get('metrics')
+            sf[sec['key']] = sec.get('content') or sec.get('best_sellers') or sec.get('brands') or sec.get('stores') or sec.get('metrics') or sec.get('communities')
+            if sec['key'] == 'flash_deals':
+                sf['flash_deals'] = {'deals': sec.get('deals') or [], 'ends_in_seconds': sec.get('ends_in_seconds') or 0}
     return {'fetched_at': s['fetched_at'], 'source': s.get('source'), 'tenant': s.get('tenant'), 'niches': s['niches'],
             'nicheCategories': {k: [c for c in (v or {}).get('categories', []) if c.get('products')] for k, v in s['nicheDetail'].items()},
             'stores': s['stores'], 'products': prods, 'storefront': sf}
+
+
+def flash(fd, ids, fetched):
+    """Ofertas relámpago reales: precio actual, precio anterior y cierre absoluto (fetched_at + ends_in_seconds)."""
+    from datetime import datetime, timedelta
+    t0 = datetime.fromisoformat(fetched.replace('Z', '+00:00'))
+    ends = (t0 + timedelta(seconds=fd.get('ends_in_seconds') or 0)).isoformat().replace('+00:00', 'Z') if fd.get('ends_in_seconds') else ''
+    items = [{'id': d['slug'], 'price': d['price'], 'before': d.get('previous_price')} for d in fd.get('deals', []) if d['slug'] in ids and d.get('previous_price')]
+    return {'endsAt': ends, 'items': items}
 
 
 def build(c):
@@ -132,7 +144,10 @@ def build(c):
         'stores': list(stores.values()),
         'products': products,
         'home': {'bestSellers': best, 'brands': (sf.get('brands') or [])[:12], 'metrics': {m['key']: m['value'] for m in (sf.get('trust_metrics') or [])},
-                 'trust': (sf.get('trust_bar') or {}).get('benefits', []), 'academy': sf.get('academy_banner') or {}},
+                 'trust': (sf.get('trust_bar') or {}).get('benefits', []), 'academy': sf.get('academy_banner') or {},
+                 'deals': flash(sf.get('flash_deals') or {}, ids, c['fetched_at']),
+                 'services': (sf.get('service_cards') or {}).get('cards', []),
+                 'communities': [{'slug': x.get('slug', ''), 'name': x['name'], 'niche': x.get('niche_code', ''), 'desc': x.get('description', ''), 'image': x.get('image', '')} for x in (sf.get('communities') or [])]},
     }
 
 

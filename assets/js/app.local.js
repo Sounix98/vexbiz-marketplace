@@ -456,14 +456,16 @@
     const on = favs.has(p.id);
     return `<button class="${cls}" type="button" data-fav="${esc(p.id)}" aria-pressed="${on}" aria-label="Guardar ${esc(p.name)} en favoritos">${ico(on ? "heart-f" : "heart")}</button>`;
   }
-  function pcard(p) {
-    return `<article class="pcard reveal">${favBtn(p, "pcard-fav")}
+  function pcard(p, deal) {
+    const off = deal && deal.before > p.price ? Math.round((1 - p.price / deal.before) * 100) : 0;
+    const label = priceLabel(p) + (off ? `, antes ${money(deal.before, p.currency)}` : "");
+    return `<article class="pcard reveal">${off ? `<span class="pcard-flag">-${off}%</span>` : ""}${favBtn(p, "pcard-fav")}
     <a class="pcard__link" href="#/p/${esc(p.id)}">
       <span class="pcard__media">${p.images && p.images[0] ? img(p.images[0], "") : `<span class="pcard__noimg">${ico("image")}</span>`}</span>
       <span class="pcard__body"><span class="pcard__name">${esc(p.name)}</span>
         <span class="pcard__sku"${p.brand ? ' translate="no"' : ""}>${esc(p.brand || p.category || "")}</span>${stockLine(p)}</span>
     </a>
-    <div class="pcard__foot"><button class="pcard-price${p.price > 0 ? "" : " pcard-price--ask"}" type="button" data-quick="${esc(p.id)}" aria-haspopup="dialog" aria-label="Vista rápida de ${esc(p.name)}, ${esc(priceLabel(p))}">${priceLabel(p)}</button>
+    <div class="pcard__foot"><span class="pcard__prices">${off ? `<s class="pcard__before" aria-hidden="true">${money(deal.before, p.currency)}</s>` : ""}<button class="pcard-price${p.price > 0 ? "" : " pcard-price--ask"}" type="button" data-quick="${esc(p.id)}" aria-haspopup="dialog" aria-label="Vista rápida de ${esc(p.name)}, ${esc(label)}">${priceLabel(p)}</button></span>
       <span class="pcard__store">${ico("shield")}<span translate="no">${esc(storeName(p))}</span></span></div></article>`;
   }
   function storeLogo(s, cls = "store-card__logo") {
@@ -474,7 +476,7 @@
     return `<a class="prov prov--v2 reveal" href="#/s/${esc(s.id)}"${bg}>
     ${cover ? "" : `<span class="prov__stage">${s.logo ? `<span class="prov__logo">${img(s.logo, "")}</span>` : `<span class="prov__mono" aria-hidden="true">${esc(initials(s.name))}</span>`}</span>`}
     ${cover ? "" : ico("check-circle", "prov__check")}
-    <span class="prov__info"><span class="prov__chip">${esc(storeNiches(s)[0] || "Tienda verificada")}</span>
+    <span class="prov__info"><span class="prov__niche">${esc(storeNiches(s)[0] || "Tienda verificada")}</span>
       <span class="prov__name" translate="no">${esc(s.name)}</span>
       <span class="prov__count${s.count > 0 ? "" : " prov__count--soon"}">${storeCount(s)}</span></span>
     <span class="prov__cta" aria-hidden="true">Ver tienda${ico("chev-r", "ico--xs")}</span></a>`;
@@ -1058,6 +1060,63 @@
     }
     return items;
   }
+  var dealsLive = (d) => !!(d && d.items && d.items.length && d.endsAt && new Date(d.endsAt) > /* @__PURE__ */ new Date());
+  function countdown(endsAt) {
+    const ms = new Date(endsAt) - /* @__PURE__ */ new Date();
+    if (ms <= 0) return "Terminó";
+    const m = Math.floor(ms / 6e4), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mm = m % 60;
+    return "Termina en " + (d ? `${d} d ${h} h` : h ? `${h} h ${mm} min` : `${mm} min`);
+  }
+  var site = (path) => CONFIG.siteUrl + path;
+  var ext = 'target="_blank" rel="noopener"';
+  function interludes(home) {
+    const svc = home.services || [], ac = home.academy || {}, com = (home.communities || []).filter((c) => c.slug);
+    const card2 = (tone, icon, kicker, title, text, cta, href) => `<a class="icard icard--${tone} reveal" href="${href}" ${ext}><span class="icard__ico">${ico(icon)}</span><span class="icard__copy"><span class="icard__kicker">${kicker}</span>
+      <span class="icard__title">${title}</span><span class="icard__text">${text}</span><span class="icard__cta">${cta}${ico("chev-r", "ico--xs")}</span></span></a>`;
+    const t = svc.find((x) => /t[ée]cnic/i.test(x.title)) || {}, r = svc.find((x) => /auxilio/i.test(x.title)) || {};
+    const list = [
+      card2("a", "tools", "Homologados", "Técnicos certificados", esc(t.description || "Encuentra expertos verificados para cada servicio que necesitas."), esc(t.cta || "Buscar técnicos"), site(t.href || "/technical-service")),
+      card2("b", "car", "Asistencia 24/7", "Auxilio vial", esc(r.description || "Asistencia en carretera cuando más lo necesitas."), esc(r.cta || "Solicitar ayuda"), site(r.href || "/roadside")),
+      card2("c", "book", esc(ac.eyebrow || "Academia VEXBIZ"), esc(ac.title || "Aprende el oficio, con quien ya lo ejerce"), esc(ac.description || "Cursos y capacitaciones para técnicos y comercios."), esc(ac.cta || "Ver los cursos"), site(ac.href || "/academy")),
+      com.length ? `<section class="sec icomm reveal" aria-labelledby="t-comm"><div class="sec__head"><h2 class="sec__title" id="t-comm">Comunidad técnica</h2><a class="seeall" href="${site("/community")}" ${ext}>Ver todas${ico("chev-r")}</a></div>
+      <p class="sec__meta">Técnicos que se ayudan: pregunta, responde y resuelve en tu oficio.</p>
+      <div class="rail">${com.map((c) => `<a class="comm" href="${site("/community/" + encodeURIComponent(c.slug))}" ${ext}><span class="comm__img">${c.image ? img(c.image, "", "", 160) : ico("users")}</span><span class="comm__name">${esc(c.name)}</span><span class="comm__cta">Preguntar${ico("chev-r", "ico--xs")}</span></a>`).join("")}</div></section>` : "",
+      card2("d", "shield", "Protección", "Seguros y pólizas", "Protege tu vehículo, tus equipos de trabajo, tu local comercial y tu mercancía.", "Pedir propuesta", site("/insurance"))
+    ];
+    return list.filter(Boolean);
+  }
+  function nicheOrder(niches) {
+    const pos = (id) => {
+      const i = CONFIG.homeNiches.indexOf(id);
+      return i < 0 ? 99 : i;
+    };
+    return niches.slice().sort((a, b) => (b.count > 0) - (a.count > 0) || b.count - a.count || pos(a.id) - pos(b.id));
+  }
+  async function nicheBlock(n, i, total, stores2, home) {
+    const own = stores2.filter((s) => storeNiches(s).includes(n.name)).sort(storeOrder);
+    let items = [], cats = [];
+    if (n.count > 0) {
+      const [best, more, det] = await Promise.all([api.byIds(home.bestSellers[n.id] || []), api.search({ niche: n.id, cursor: 0 }), api.niche(n.id).catch(() => ({ categories: [] }))]);
+      items = best.concat(more.items.filter((p) => !best.some((b) => b.id === p.id))).slice(0, 8);
+      cats = (det.categories || []).slice().sort((a, b) => b.products - a.products).slice(0, 6);
+    }
+    const meta = [n.count > 0 ? plural(n.count, "producto", "productos") : "Catálogo en camino", own.length ? plural(own.length, "tienda", "tiendas") : ""].filter(Boolean).join(" · ");
+    const hid = "nb-" + n.id;
+    return `<section class="nblock reveal" aria-labelledby="${hid}" data-nblock="${esc(n.id)}">
+    <a class="nblock__head" href="#/n/${esc(n.id)}"><span class="nblock__ico"><img src="assets/img/nichos/${esc(n.id)}.webp" width="96" height="96" alt="" loading="lazy" decoding="async"></span>
+      <span class="nblock__txt"><span class="nblock__eyebrow">Nicho ${i + 1} de ${total}</span><h2 class="nblock__title" id="${hid}">${esc(n.name)}</h2><span class="nblock__meta">${meta}</span></span>${ico("chev-r")}</a>
+    ${cats.length ? `<div class="nblock__cats rail">${cats.map((c) => `<a class="chip" href="#/n/${esc(n.id)}?cat=${encodeURIComponent(c.slug)}">${esc(c.name)} <span class="chip__count">${c.products}</span></a>`).join("")}</div>` : ""}
+    ${items.length ? `<div class="rail">${items.map((p) => pcard(p)).join("")}</div>` : `<p class="nblock__soon">${ico("clock")}<span>Los proveedores de ${esc(n.name)} están cargando sus productos. Te avisamos cuando lleguen.</span></p>`}
+    ${own.length ? `<div class="nblock__stores"><span class="nblock__label">Tiendas de ${esc(n.name)}</span><div class="rail">${own.slice(0, 8).map((s) => `<a class="spill" href="#/s/${esc(s.id)}">${storeLogo(s, "spill__logo")}<span class="spill__name" translate="no">${esc(s.name)}</span></a>`).join("")}</div></div>` : ""}
+    <div class="nblock__ctas">
+      <a class="vx-btn vx-btn--primary vx-btn--block" href="#/n/${esc(n.id)}"><span class="vx-btn__label">Explorar ${esc(n.name)}</span></a>
+      ${n.count > 0 ? n.technician ? `<a class="vx-btn vx-btn--secondary vx-btn--block" href="${site("/technical-service")}" ${ext}><span class="vx-btn__label">Técnicos de ${esc(n.name)}</span></a>` : "" : btn("Avísame cuando haya", "vx-btn--secondary vx-btn--block", "data-notify")}
+    </div></section>`;
+  }
+  var feedEnd = (total) => `<section class="nfeed__end reveal" aria-labelledby="t-end"><span class="nfeed__endico">${ico("check-circle")}</span>
+  <h2 class="sec__title" id="t-end">Recorriste los ${total} nichos</h2><p>¿No encontraste lo que buscas? Mira todas las categorías o pregúntale a una tienda.</p>
+  <div class="nblock__ctas"><a class="vx-btn vx-btn--primary vx-btn--block" href="#/categorias"><span class="vx-btn__label">Ver todas las categorías</span></a>
+  <a class="vx-btn vx-btn--ghost vx-btn--block" href="${site("/sell-on-vexbiz")}" ${ext}><span class="vx-btn__label">¿Vendes? Publica tu catálogo</span></a></div></section>`;
   var home_default = {
     title: () => "Inicio",
     async render() {
@@ -1102,6 +1161,10 @@
       </nav>
       <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas" data-seeall-stores>Ver todas${ico("chev-r")}</a></div><div class="rail" data-providers></div></section>
       <section class="sec" aria-labelledby="t-exp"><div class="sec__head"><h2 class="sec__title" id="t-exp">Explora por interés</h2><a class="seeall" href="#/n/todo" data-seeall>Ver todo${ico("chev-r")}</a></div><div class="rail" data-products></div></section>
+      ${dealsLive(home.deals) ? `<section class="sec deals" aria-labelledby="t-deals" data-deals><div class="sec__head"><h2 class="sec__title deals__title" id="t-deals">${ico("bolt")}Ofertas relámpago</h2><span class="deals__clock" data-countdown>${esc(countdown(home.deals.endsAt))}</span></div>
+        <p class="sec__meta">Precios especiales por tiempo limitado, con el pago en custodia hasta que recibes.</p><div class="rail" data-deal-rail></div></section>` : ""}
+      <div class="nfeed" data-feed aria-label="Recorrido por los nichos de VEXBIZ" role="feed" aria-busy="false"></div>
+      <div class="nfeed__more" data-feed-more><button class="vx-btn vx-btn--ghost" type="button" data-feed-next><span class="vx-btn__label">Ver el siguiente nicho</span></button></div>
       ${home.brands && home.brands.length ? `<section class="sec" aria-labelledby="t-brands"><div class="sec__head"><h2 class="sec__title" id="t-brands">Marcas en VEXBIZ</h2></div>
         <div class="rail">${home.brands.slice(0, 10).map((b) => `<a class="brand-chip reveal" href="#/buscar?q=${encodeURIComponent(b.name)}"><span class="brand-chip__name" translate="no">${esc(b.name)}</span><span class="brand-chip__count">${plural(b.products, "producto", "productos")}</span></a>`).join("")}</div></section>` : ""}
       ${trust.length ? `<section class="sec" aria-label="Por qué comprar en VEXBIZ"><div class="trust-strip">${trust.map((t) => `<div class="trust-item">${ico(TRUST_ICON[t.icon] || "check-circle")}<span><b>${esc(t.title)}</b><span>${esc(t.detail)}</span></span></div>`).join("")}</div></section>` : ""}
@@ -1122,6 +1185,53 @@
         reveal(el);
       }
       await rails();
+      const dealBox = el.querySelector("[data-deals]");
+      let clock = null;
+      if (dealBox) {
+        const byId2 = new Map(home.deals.items.map((d) => [d.id, d]));
+        const ps = await api.byIds(home.deals.items.map((d) => d.id));
+        dealBox.querySelector("[data-deal-rail]").innerHTML = ps.map((p) => pcard(p, byId2.get(p.id))).join("");
+        const cd = dealBox.querySelector("[data-countdown]");
+        clock = setInterval(() => {
+          cd.textContent = countdown(home.deals.endsAt);
+          if (!dealsLive(home.deals)) {
+            clearInterval(clock);
+            dealBox.remove();
+          }
+        }, 3e4);
+        reveal(dealBox);
+      }
+      const feed = el.querySelector("[data-feed]"), more = el.querySelector("[data-feed-more]");
+      const order = nicheOrder(niches), extras = interludes(home);
+      let fi = 0, busy = false, io2 = null;
+      async function next() {
+        if (busy || fi >= order.length) return;
+        busy = true;
+        feed.setAttribute("aria-busy", "true");
+        const i = fi++;
+        let html = await nicheBlock(order[i], i, order.length, certified, home);
+        if (i % 2 === 1 && extras[(i - 1) / 2]) html += extras[(i - 1) / 2];
+        if (fi >= order.length) html += feedEnd(order.length);
+        feed.insertAdjacentHTML("beforeend", html);
+        reveal(feed);
+        feed.setAttribute("aria-busy", "false");
+        busy = false;
+        if (fi >= order.length) {
+          if (io2) io2.disconnect();
+          more.remove();
+          return;
+        }
+        const r = more.getBoundingClientRect(), root = scrRoot.getBoundingClientRect();
+        if (r.top < root.bottom + 600) next();
+      }
+      const scrRoot = el.closest(".screen") || document.documentElement;
+      more.querySelector("[data-feed-next]").addEventListener("click", next);
+      if ("IntersectionObserver" in window) {
+        io2 = new IntersectionObserver((es) => {
+          if (es.some((e) => e.isIntersecting)) next();
+        }, { root: el.closest(".screen"), rootMargin: "0px 0px 600px 0px" });
+        io2.observe(more);
+      }
       const tabs = el.querySelector("[data-niches]");
       tabs.addEventListener("click", (e) => {
         const b = e.target.closest("[data-niche]");
@@ -1266,6 +1376,8 @@
         restart();
       });
       ctx.onCleanup(() => {
+        clearInterval(clock);
+        if (io2) io2.disconnect();
         clearInterval(auto);
         clearInterval(tick);
         cancelAnimationFrame(raf);
@@ -1563,6 +1675,31 @@
   };
 
   // assets/js/views/checkout.js
+  var COUPON_KEY = "vx-coupon";
+  var coupon = {
+    get() {
+      try {
+        return sessionStorage.getItem(COUPON_KEY) || "";
+      } catch (e) {
+        return "";
+      }
+    },
+    set(v) {
+      try {
+        if (v) sessionStorage.setItem(COUPON_KEY, v);
+        else sessionStorage.removeItem(COUPON_KEY);
+      } catch (e) {
+      }
+    }
+  };
+  var couponBox = () => {
+    const c = coupon.get();
+    return c ? `<div class="coupon coupon--on" data-coupon><span class="coupon__tag">${ico("tag")}<span><b translate="no">${esc(c)}</b><span>Se valida y se aplica al confirmar el pedido</span></span></span>
+      <button class="textlink" type="button" data-coupon-off>Quitar</button></div>` : `<form class="coupon" data-coupon novalidate><label class="coupon__label" for="coupon-in">¿Tienes un código de cupón?</label>
+      <div class="coupon__row"><input class="coupon__in" id="coupon-in" name="coupon" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" aria-describedby="coupon-hint">
+      <button class="vx-btn vx-btn--secondary" type="submit"><span class="vx-btn__label">Aplicar</span></button></div>
+      <p class="coupon__hint" id="coupon-hint" data-coupon-hint>El descuento se valida y se aplica al crear la compra.</p></form>`;
+  };
   var sname = (id) => (storeOf(id) || {}).name || "Tienda";
   var thumb = (l) => `<a class="row__thumb" href="#/p/${esc(l.id)}" aria-label="${esc(l.name)}">${l.img ? img(l.img, "") : ico("image")}</a>`;
   var carrito = {
@@ -1580,11 +1717,39 @@
           <div class="group__foot"><span>Subtotal de la tienda</span><b>${money(sub)}</b></div></section>`;
       }).join("")}
       <p class="note">${ico("info")}<span>El envío o retiro se elige por tienda en el siguiente paso. Cada tienda despacha por separado.</span></p>
+      ${couponBox()}
       <div class="total"><div class="total__line total__line--big"><span>Total productos</span><b>${money(cart.total())}</b></div></div>
       <div style="padding:0 var(--app-gutter)"><a class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" href="#/pago"><span class="vx-btn__label">Continuar a entrega y pago</span></a></div></div>`;
     },
     mount(el, _p, _q, ctx) {
+      el.addEventListener("submit", (e) => {
+        const f = e.target.closest("[data-coupon]");
+        if (!f) return;
+        e.preventDefault();
+        const inp = f.querySelector("input"), v = inp.value.trim().toUpperCase().replace(/\s+/g, "");
+        const hint = f.querySelector("[data-coupon-hint]");
+        if (!/^[A-Z0-9_-]{3,24}$/.test(v)) {
+          inp.setAttribute("aria-invalid", "true");
+          hint.classList.add("coupon__hint--err");
+          hint.textContent = v ? "Usa solo letras, números o guiones, de 3 a 24 caracteres." : "Escribe el código que te dio la tienda.";
+          inp.focus();
+          return;
+        }
+        coupon.set(v);
+        toast("Cupón guardado: se valida al confirmar");
+        ctx.rerender();
+      });
       el.addEventListener("click", (e) => {
+        if (e.target.closest("[data-coupon-off]")) {
+          const old = coupon.get();
+          coupon.set("");
+          toast("Cupón quitado", { action: "Deshacer", onAction: () => {
+            coupon.set(old);
+            ctx.rerender();
+          } });
+          ctx.rerender();
+          return;
+        }
         const line = e.target.closest("[data-line]"), b = e.target.closest("[data-inc],[data-dec]"), rm = e.target.closest("[data-remove]");
         if (line && b) cart.set(line.dataset.line, cart.qty(line.dataset.line) + (b.hasAttribute("data-inc") ? 1 : -1));
         else if (rm) {
@@ -1621,6 +1786,7 @@
       </fieldset>
       <p class="note" style="margin-top:16px">${ico("clock")}<span>Tu pedido queda reservado 8 horas mientras la tienda verifica el pago. Si no lo verifica en ese plazo, se libera la existencia y te avisamos.</span></p>
       <div class="total" style="margin-top:12px"><div class="total__line"><span>Productos</span><b>${money(cart.total())}</b></div><div class="total__line" data-ship><span>Envío</span><b>Gratis</b></div>
+        ${coupon.get() ? `<div class="total__line"><span>Cupón <b translate="no">${esc(coupon.get())}</b></span><span class="total__note">Se valida al confirmar</span></div>` : ""}
         <div class="total__line total__line--big"><span>Total</span><b>${money(cart.total())}</b></div></div>
       <p class="foot-note">Al confirmar aceptas los términos y la política de devoluciones de cada tienda.</p>
       <div class="actionbar"><div class="actionbar__sum"><span>Total</span><b>${money(cart.total())}</b></div>${btn("Confirmar pedido", "vx-btn--primary", "data-confirm")}</div>`;
@@ -1643,7 +1809,8 @@
         const delivery = Object.fromEntries([...el.querySelectorAll('input[name^="del-"]:checked')].map((i) => [i.name.slice(4), i.value]));
         const pay = (el.querySelector('input[name="pay"]:checked') || {}).value;
         setTimeout(() => success(this, "Listo", () => {
-          const code = orders.place({ pay, delivery, city: prefs.city() });
+          const code = orders.place({ pay, delivery, city: prefs.city(), coupon: coupon.get() || void 0 });
+          coupon.set("");
           nav.go("#/pedido/" + code, true);
         }), reduce ? 300 : 1400);
       });
@@ -1818,12 +1985,12 @@
   };
 
   // assets/js/views/login.js
-  var site = (path) => CONFIG.siteUrl + path;
-  var ext = (label, path, cls = "textlink") => `<a class="${cls}" href="${site(path)}" target="_blank" rel="noopener">${label}</a>`;
+  var site2 = (path) => CONFIG.siteUrl + path;
+  var ext2 = (label, path, cls = "textlink") => `<a class="${cls}" href="${site2(path)}" target="_blank" rel="noopener">${label}</a>`;
   var safeNext = (n) => n && /^#\/[a-z]/.test(n) && !n.startsWith("#/login") ? n : "#/cuenta";
   var demoNote = (kind) => auth.demo() ? `<div class="msg msg--info" role="note">${ico("help")}<span><b>Modo demostración.</b> Nada sale de este teléfono. ${kind === "register" ? "Cualquier dato válido crea la cuenta; un correo con «existe» muestra el aviso de correo ya registrado." : "Cualquier correo y contraseña entran. Un correo con «2fa» pide código (123456), uno con «bloqueada» muestra el bloqueo y la contraseña «error» falla."}</span></div>` : "";
   var safeNote = () => `<p class="auth__safe">${ico("lock")}<span>${auth.demo() ? "En la app publicada, la conexión va directo a VEXBIZ y la app no guarda tu contraseña." : "La conexión va directo a VEXBIZ. La app no guarda tu contraseña."}</span></p>`;
-  var toRegister = (label) => auth.demo() ? `<a class="textlink" href="#/registro">${label}</a>` : ext(label, "/register");
+  var toRegister = (label) => auth.demo() ? `<a class="textlink" href="#/registro">${label}</a>` : ext2(label, "/register");
   var toLogin = (label) => `<a class="textlink" href="#/login">${label}</a>`;
   function fieldError(input, text) {
     const fld = input.closest(".fld");
@@ -1853,7 +2020,7 @@
     <div class="msg msg--info" role="status" data-notice hidden></div>
     <div class="fld" data-fld="email"><label for="lg-email">Correo electrónico</label>
       <div class="fld__box">${ico("mail")}<input id="lg-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="nombre@ejemplo.com" required></div></div>
-    <div class="fld" data-fld="password"><div class="fld__top"><label for="lg-pass">Contraseña</label>${ext("¿Olvidaste tu contraseña?", "/recover")}</div>
+    <div class="fld" data-fld="password"><div class="fld__top"><label for="lg-pass">Contraseña</label>${ext2("¿Olvidaste tu contraseña?", "/recover")}</div>
       <div class="fld__box">${ico("lock")}<input id="lg-pass" name="password" type="password" autocomplete="current-password" required>
         <button class="iconbtn" type="button" data-peek aria-pressed="false" aria-label="Ver contraseña" aria-controls="lg-pass">${ico("eye")}</button></div></div>
     <button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="submit" data-submit><span class="vx-btn__label">Entrar a mi cuenta</span></button>
@@ -2027,7 +2194,7 @@
       if (!auth.demo()) {
         return brandbar() + `<div class="auth"><div class="auth__card">
         <div class="auth__head"><span class="auth__badge">${ico("user")}</span><div><h1 tabindex="-1" data-focus>Crear cuenta</h1><p>${esc(it.sub)}</p></div></div>
-        ${ext('<span class="vx-btn__label">Crear mi cuenta en ve.vexbiz.com</span>', "/register", "vx-btn vx-btn--primary vx-btn--block vx-btn--lg")}
+        ${ext2('<span class="vx-btn__label">Crear mi cuenta en ve.vexbiz.com</span>', "/register", "vx-btn vx-btn--primary vx-btn--block vx-btn--lg")}
         </div><p class="auth__alt">¿Ya tienes una cuenta registrada? ${toLogin("Iniciar sesión")}</p></div>`;
       }
       return brandbar() + `<div class="auth" data-reg><div class="auth__card">
@@ -2046,7 +2213,7 @@
           <ul class="rules" id="rg-rules" data-rules>${rulesHtml("")}</ul></div>
         <div class="fld"><label for="rg-ref">Código de invitación (opcional)</label><div class="fld__box"><input id="rg-ref" name="ref" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Ej. VX-8942"></div></div>
         <button class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" type="submit" data-submit><span class="vx-btn__label">Registrar mi cuenta</span></button>
-        <p class="auth__legal">Al registrarte, confirmas que aceptas nuestros ${ext("Términos y Condiciones", "/terms")} y la ${ext("Política de Privacidad", "/privacy")}.</p>
+        <p class="auth__legal">Al registrarte, confirmas que aceptas nuestros ${ext2("Términos y Condiciones", "/terms")} y la ${ext2("Política de Privacidad", "/privacy")}.</p>
       </form></div>
       <p class="auth__alt">¿Ya tienes una cuenta registrada? ${toLogin("Iniciar sesión")}</p></div>`;
     },

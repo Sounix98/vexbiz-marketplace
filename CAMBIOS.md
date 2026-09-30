@@ -2,6 +2,16 @@
 
 Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `index.html` y la ruta indicada (se escribe después de `index.html` en la barra de direcciones, por ejemplo `index.html#/login`).
 
+
+## 1.9.0 · 30/09/2026
+
+- Tarjeta de proveedor: el nicho ("Refrigeración", etc.) ya no va en burbuja, queda como texto.
+- Inicio con recorrido por los 11 nichos: al bajar se carga un bloque por nicho (ícono, "Nicho N de 11", productos y tiendas, categorías principales y el botón "Explorar <nicho>"). Los nichos sin catálogo muestran sus tiendas y "Avísame cuando haya". Termina con "Recorriste los 11 nichos" y enlaces a Categorías y a Vender.
+- Cada 2 nichos se intercala un bloque del sitio en vivo: Técnicos certificados, Auxilio vial 24/7, Academia, Comunidad técnica y Seguros y pólizas (abren ve.vexbiz.com).
+- Ofertas relámpago reales de ve.vexbiz.com (6 productos, -10%, precio anterior tachado y cuenta regresiva hasta el 06/10).
+- Carrito: campo "¿Tienes un código de cupón?" como en el sitio. Los cupones los crea cada tienda y se validan al crear la compra; la app guarda el código y lo muestra en Entrega y pago.
+- Catálogo actualizado al 30/09 (373 productos, 23 tiendas, Farmacias con productos). Ícono nuevo "tag" en el sprite.
+
 ## 1.8.0 · 29/09 · Dos ideas del tablero de Pinterest «UI DESIGN WZ68»
 
 Revisé 50 de los 197 pines; los demás piden iniciar sesión en Pinterest. Se programaron 4 propuestas con pruebas de antes y después, y se aplicaron las 2 elegidas.

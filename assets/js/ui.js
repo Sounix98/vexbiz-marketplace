@@ -46,14 +46,17 @@ export function favBtn(p, cls) {
   return `<button class="${cls}" type="button" data-fav="${esc(p.id)}" aria-pressed="${on}" aria-label="Guardar ${esc(p.name)} en favoritos">${ico(on ? 'heart-f' : 'heart')}</button>`;
 }
 
-export function pcard(p) {
-  return `<article class="pcard reveal">${favBtn(p, 'pcard-fav')}
+/* deal = { before } : oferta relámpago real de ve.vexbiz.com (precio anterior tachado y % de descuento) */
+export function pcard(p, deal) {
+  const off = deal && deal.before > p.price ? Math.round((1 - p.price / deal.before) * 100) : 0;
+  const label = priceLabel(p) + (off ? `, antes ${money(deal.before, p.currency)}` : '');
+  return `<article class="pcard reveal">${off ? `<span class="pcard-flag">-${off}%</span>` : ''}${favBtn(p, 'pcard-fav')}
     <a class="pcard__link" href="#/p/${esc(p.id)}">
       <span class="pcard__media">${p.images && p.images[0] ? img(p.images[0], '') : `<span class="pcard__noimg">${ico('image')}</span>`}</span>
       <span class="pcard__body"><span class="pcard__name">${esc(p.name)}</span>
         <span class="pcard__sku"${p.brand ? ' translate="no"' : ''}>${esc(p.brand || p.category || '')}</span>${stockLine(p)}</span>
     </a>
-    <div class="pcard__foot"><button class="pcard-price${p.price > 0 ? '' : ' pcard-price--ask'}" type="button" data-quick="${esc(p.id)}" aria-haspopup="dialog" aria-label="Vista rápida de ${esc(p.name)}, ${esc(priceLabel(p))}">${priceLabel(p)}</button>
+    <div class="pcard__foot"><span class="pcard__prices">${off ? `<s class="pcard__before" aria-hidden="true">${money(deal.before, p.currency)}</s>` : ''}<button class="pcard-price${p.price > 0 ? '' : ' pcard-price--ask'}" type="button" data-quick="${esc(p.id)}" aria-haspopup="dialog" aria-label="Vista rápida de ${esc(p.name)}, ${esc(label)}">${priceLabel(p)}</button></span>
       <span class="pcard__store">${ico('shield')}<span translate="no">${esc(storeName(p))}</span></span></div></article>`;
 }
 
@@ -67,7 +70,7 @@ export function provCard(s, cover) {
   return `<a class="prov prov--v2 reveal" href="#/s/${esc(s.id)}"${bg}>
     ${cover ? '' : `<span class="prov__stage">${s.logo ? `<span class="prov__logo">${img(s.logo, '')}</span>` : `<span class="prov__mono" aria-hidden="true">${esc(initials(s.name))}</span>`}</span>`}
     ${cover ? '' : ico('check-circle', 'prov__check')}
-    <span class="prov__info"><span class="prov__chip">${esc(storeNiches(s)[0] || 'Tienda verificada')}</span>
+    <span class="prov__info"><span class="prov__niche">${esc(storeNiches(s)[0] || 'Tienda verificada')}</span>
       <span class="prov__name" translate="no">${esc(s.name)}</span>
       <span class="prov__count${s.count > 0 ? '' : ' prov__count--soon'}">${storeCount(s)}</span></span>
     <span class="prov__cta" aria-hidden="true">Ver tienda${ico('chev-r', 'ico--xs')}</span></a>`;

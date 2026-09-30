@@ -1,10 +1,11 @@
 /* Inicio · Figma MARKETPLACE / PROTOTIPO / Home (292:800) + guía del Home 26/09.
    Orden: cabecera y ubicación → tabs de nicho → banners → banda Academia/Técnicos →
-   proveedores certificados → explora por interés → marcas → confianza. */
+   proveedores certificados → explora por interés → ofertas relámpago → recorrido por los 11
+   nichos (se carga al bajar, con bloques de servicios intercalados cada 2 nichos) → marcas → confianza. */
 import { api } from '../api.js';
 import { CONFIG } from '../config.js';
 import { esc, plural, initials } from '../format.js';
-import { ico, img, pcard, provCard, empty, btn, reveal, reduce, storeOf, storeNiches, storeOrder } from '../ui.js';
+import { ico, img, pcard, provCard, empty, btn, reveal, reduce, storeOf, storeNiches, storeOrder, storeLogo } from '../ui.js';
 import { prefs } from '../store.js';
 import { auth } from '../auth.js';
 
@@ -29,6 +30,69 @@ async function railProducts(niche, home) {
   }
   return items;
 }
+
+/* ---------- Ofertas relámpago reales (storefront · flash_deals) ---------- */
+const dealsLive = (d) => !!(d && d.items && d.items.length && d.endsAt && new Date(d.endsAt) > new Date());
+function countdown(endsAt) {
+  const ms = new Date(endsAt) - new Date();
+  if (ms <= 0) return 'Terminó';
+  const m = Math.floor(ms / 60000), d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60;
+  return 'Termina en ' + (d ? `${d} d ${h} h` : h ? `${h} h ${mm} min` : `${mm} min`);
+}
+
+/* ---------- Recorrido por nichos (scroll hasta ver los 11) ----------
+   Un bloque por nicho con su llamado a explorar; cada 2 nichos, un bloque de servicio del
+   sitio en vivo (storefront: service_cards, academy_banner, communities, /insurance). */
+const site = (path) => CONFIG.siteUrl + path;
+const ext = 'target="_blank" rel="noopener"';
+function interludes(home) {
+  const svc = home.services || [], ac = home.academy || {}, com = (home.communities || []).filter((c) => c.slug);
+  const card = (tone, icon, kicker, title, text, cta, href) =>
+    `<a class="icard icard--${tone} reveal" href="${href}" ${ext}><span class="icard__ico">${ico(icon)}</span><span class="icard__copy"><span class="icard__kicker">${kicker}</span>
+      <span class="icard__title">${title}</span><span class="icard__text">${text}</span><span class="icard__cta">${cta}${ico('chev-r', 'ico--xs')}</span></span></a>`;
+  const t = svc.find((x) => /t[ée]cnic/i.test(x.title)) || {}, r = svc.find((x) => /auxilio/i.test(x.title)) || {};
+  const list = [
+    card('a', 'tools', 'Homologados', 'Técnicos certificados', esc(t.description || 'Encuentra expertos verificados para cada servicio que necesitas.'), esc(t.cta || 'Buscar técnicos'), site(t.href || '/technical-service')),
+    card('b', 'car', 'Asistencia 24/7', 'Auxilio vial', esc(r.description || 'Asistencia en carretera cuando más lo necesitas.'), esc(r.cta || 'Solicitar ayuda'), site(r.href || '/roadside')),
+    card('c', 'book', esc(ac.eyebrow || 'Academia VEXBIZ'), esc(ac.title || 'Aprende el oficio, con quien ya lo ejerce'), esc(ac.description || 'Cursos y capacitaciones para técnicos y comercios.'), esc(ac.cta || 'Ver los cursos'), site(ac.href || '/academy')),
+    com.length ? `<section class="sec icomm reveal" aria-labelledby="t-comm"><div class="sec__head"><h2 class="sec__title" id="t-comm">Comunidad técnica</h2><a class="seeall" href="${site('/community')}" ${ext}>Ver todas${ico('chev-r')}</a></div>
+      <p class="sec__meta">Técnicos que se ayudan: pregunta, responde y resuelve en tu oficio.</p>
+      <div class="rail">${com.map((c) => `<a class="comm" href="${site('/community/' + encodeURIComponent(c.slug))}" ${ext}><span class="comm__img">${c.image ? img(c.image, '', '', 160) : ico('users')}</span><span class="comm__name">${esc(c.name)}</span><span class="comm__cta">Preguntar${ico('chev-r', 'ico--xs')}</span></a>`).join('')}</div></section>` : '',
+    card('d', 'shield', 'Protección', 'Seguros y pólizas', 'Protege tu vehículo, tus equipos de trabajo, tu local comercial y tu mercancía.', 'Pedir propuesta', site('/insurance')),
+  ];
+  return list.filter(Boolean);
+}
+function nicheOrder(niches) {
+  const pos = (id) => { const i = CONFIG.homeNiches.indexOf(id); return i < 0 ? 99 : i; };
+  return niches.slice().sort((a, b) => (b.count > 0) - (a.count > 0) || b.count - a.count || pos(a.id) - pos(b.id));
+}
+async function nicheBlock(n, i, total, stores, home) {
+  const own = stores.filter((s) => storeNiches(s).includes(n.name)).sort(storeOrder);
+  let items = [], cats = [];
+  if (n.count > 0) {
+    const [best, more, det] = await Promise.all([api.byIds(home.bestSellers[n.id] || []), api.search({ niche: n.id, cursor: 0 }), api.niche(n.id).catch(() => ({ categories: [] }))]);
+    items = best.concat(more.items.filter((p) => !best.some((b) => b.id === p.id))).slice(0, 8);
+    cats = (det.categories || []).slice().sort((a, b) => b.products - a.products).slice(0, 6);
+  }
+  const meta = [n.count > 0 ? plural(n.count, 'producto', 'productos') : 'Catálogo en camino', own.length ? plural(own.length, 'tienda', 'tiendas') : ''].filter(Boolean).join(' · ');
+  const hid = 'nb-' + n.id;
+  return `<section class="nblock reveal" aria-labelledby="${hid}" data-nblock="${esc(n.id)}">
+    <a class="nblock__head" href="#/n/${esc(n.id)}"><span class="nblock__ico"><img src="assets/img/nichos/${esc(n.id)}.webp" width="96" height="96" alt="" loading="lazy" decoding="async"></span>
+      <span class="nblock__txt"><span class="nblock__eyebrow">Nicho ${i + 1} de ${total}</span><h2 class="nblock__title" id="${hid}">${esc(n.name)}</h2><span class="nblock__meta">${meta}</span></span>${ico('chev-r')}</a>
+    ${cats.length ? `<div class="nblock__cats rail">${cats.map((c) => `<a class="chip" href="#/n/${esc(n.id)}?cat=${encodeURIComponent(c.slug)}">${esc(c.name)} <span class="chip__count">${c.products}</span></a>`).join('')}</div>` : ''}
+    ${items.length ? `<div class="rail">${items.map((p) => pcard(p)).join('')}</div>`
+      : `<p class="nblock__soon">${ico('clock')}<span>Los proveedores de ${esc(n.name)} están cargando sus productos. Te avisamos cuando lleguen.</span></p>`}
+    ${own.length ? `<div class="nblock__stores"><span class="nblock__label">Tiendas de ${esc(n.name)}</span><div class="rail">${own.slice(0, 8).map((s) => `<a class="spill" href="#/s/${esc(s.id)}">${storeLogo(s, 'spill__logo')}<span class="spill__name" translate="no">${esc(s.name)}</span></a>`).join('')}</div></div>` : ''}
+    <div class="nblock__ctas">
+      <a class="vx-btn vx-btn--primary vx-btn--block" href="#/n/${esc(n.id)}"><span class="vx-btn__label">Explorar ${esc(n.name)}</span></a>
+      ${n.count > 0 ? (n.technician ? `<a class="vx-btn vx-btn--secondary vx-btn--block" href="${site('/technical-service')}" ${ext}><span class="vx-btn__label">Técnicos de ${esc(n.name)}</span></a>` : '')
+        : btn('Avísame cuando haya', 'vx-btn--secondary vx-btn--block', 'data-notify')}
+    </div></section>`;
+}
+const feedEnd = (total) => `<section class="nfeed__end reveal" aria-labelledby="t-end"><span class="nfeed__endico">${ico('check-circle')}</span>
+  <h2 class="sec__title" id="t-end">Recorriste los ${total} nichos</h2><p>¿No encontraste lo que buscas? Mira todas las categorías o pregúntale a una tienda.</p>
+  <div class="nblock__ctas"><a class="vx-btn vx-btn--primary vx-btn--block" href="#/categorias"><span class="vx-btn__label">Ver todas las categorías</span></a>
+  <a class="vx-btn vx-btn--ghost vx-btn--block" href="${site('/sell-on-vexbiz')}" ${ext}><span class="vx-btn__label">¿Vendes? Publica tu catálogo</span></a></div></section>`;
 
 export default {
   title: () => 'Inicio',
@@ -77,6 +141,10 @@ export default {
       </nav>
       <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas" data-seeall-stores>Ver todas${ico('chev-r')}</a></div><div class="rail" data-providers></div></section>
       <section class="sec" aria-labelledby="t-exp"><div class="sec__head"><h2 class="sec__title" id="t-exp">Explora por interés</h2><a class="seeall" href="#/n/todo" data-seeall>Ver todo${ico('chev-r')}</a></div><div class="rail" data-products></div></section>
+      ${dealsLive(home.deals) ? `<section class="sec deals" aria-labelledby="t-deals" data-deals><div class="sec__head"><h2 class="sec__title deals__title" id="t-deals">${ico('bolt')}Ofertas relámpago</h2><span class="deals__clock" data-countdown>${esc(countdown(home.deals.endsAt))}</span></div>
+        <p class="sec__meta">Precios especiales por tiempo limitado, con el pago en custodia hasta que recibes.</p><div class="rail" data-deal-rail></div></section>` : ''}
+      <div class="nfeed" data-feed aria-label="Recorrido por los nichos de VEXBIZ" role="feed" aria-busy="false"></div>
+      <div class="nfeed__more" data-feed-more><button class="vx-btn vx-btn--ghost" type="button" data-feed-next><span class="vx-btn__label">Ver el siguiente nicho</span></button></div>
       ${home.brands && home.brands.length ? `<section class="sec" aria-labelledby="t-brands"><div class="sec__head"><h2 class="sec__title" id="t-brands">Marcas en VEXBIZ</h2></div>
         <div class="rail">${home.brands.slice(0, 10).map((b) => `<a class="brand-chip reveal" href="#/buscar?q=${encodeURIComponent(b.name)}"><span class="brand-chip__name" translate="no">${esc(b.name)}</span><span class="brand-chip__count">${plural(b.products, 'producto', 'productos')}</span></a>`).join('')}</div></section>` : ''}
       ${trust.length ? `<section class="sec" aria-label="Por qué comprar en VEXBIZ"><div class="trust-strip">${trust.map((t) => `<div class="trust-item">${ico(TRUST_ICON[t.icon] || 'check-circle')}<span><b>${esc(t.title)}</b><span>${esc(t.detail)}</span></span></div>`).join('')}</div></section>` : ''}
@@ -102,6 +170,44 @@ export default {
       reveal(el);
     }
     await rails();
+
+    // Ofertas relámpago: productos reales con su precio anterior; el reloj baja cada 30 s
+    const dealBox = el.querySelector('[data-deals]');
+    let clock = null;
+    if (dealBox) {
+      const byId = new Map(home.deals.items.map((d) => [d.id, d]));
+      const ps = await api.byIds(home.deals.items.map((d) => d.id));
+      dealBox.querySelector('[data-deal-rail]').innerHTML = ps.map((p) => pcard(p, byId.get(p.id))).join('');
+      const cd = dealBox.querySelector('[data-countdown]');
+      clock = setInterval(() => { cd.textContent = countdown(home.deals.endsAt); if (!dealsLive(home.deals)) { clearInterval(clock); dealBox.remove(); } }, 30000);
+      reveal(dealBox);
+    }
+
+    // Recorrido por los 11 nichos: se agrega un bloque al acercarse al final; para al terminar
+    const feed = el.querySelector('[data-feed]'), more = el.querySelector('[data-feed-more]');
+    const order = nicheOrder(niches), extras = interludes(home);
+    let fi = 0, busy = false, io = null;
+    async function next() {
+      if (busy || fi >= order.length) return;
+      busy = true; feed.setAttribute('aria-busy', 'true');
+      const i = fi++;
+      let html = await nicheBlock(order[i], i, order.length, certified, home);
+      if (i % 2 === 1 && extras[(i - 1) / 2]) html += extras[(i - 1) / 2];
+      if (fi >= order.length) html += feedEnd(order.length);
+      feed.insertAdjacentHTML('beforeend', html);
+      reveal(feed);
+      feed.setAttribute('aria-busy', 'false'); busy = false;
+      if (fi >= order.length) { if (io) io.disconnect(); more.remove(); return; }
+      // si el centinela sigue a la vista (pantallas altas), carga el siguiente
+      const r = more.getBoundingClientRect(), root = scrRoot.getBoundingClientRect();
+      if (r.top < root.bottom + 600) next();
+    }
+    const scrRoot = el.closest('.screen') || document.documentElement;
+    more.querySelector('[data-feed-next]').addEventListener('click', next);
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) next(); }, { root: el.closest('.screen'), rootMargin: '0px 0px 600px 0px' });
+      io.observe(more);
+    }
 
     const tabs = el.querySelector('[data-niches]');
     tabs.addEventListener('click', (e) => {
@@ -191,6 +297,6 @@ export default {
       pb.querySelector('use').setAttribute('href', '#i-' + (paused ? 'play' : 'pause'));
       restart();
     });
-    ctx.onCleanup(() => { clearInterval(auto); clearInterval(tick); cancelAnimationFrame(raf); scr.removeEventListener('scroll', onScroll); });
+    ctx.onCleanup(() => { clearInterval(clock); if (io) io.disconnect(); clearInterval(auto); clearInterval(tick); cancelAnimationFrame(raf); scr.removeEventListener('scroll', onScroll); });
   },
 };

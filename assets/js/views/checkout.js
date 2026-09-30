@@ -8,6 +8,23 @@ import { nav } from '../nav.js';
 import { CONFIG } from '../config.js';
 import { auth, STATUS, STATUS_TONE } from '../auth.js';
 
+/* Cupón: como en ve.vexbiz.com, cada tienda crea los suyos y el descuento se valida al crear
+   la compra, así que aquí solo se guarda el código (sesión) y viaja con el pedido. */
+const COUPON_KEY = 'vx-coupon';
+const coupon = {
+  get() { try { return sessionStorage.getItem(COUPON_KEY) || ''; } catch (e) { return ''; } },
+  set(v) { try { if (v) sessionStorage.setItem(COUPON_KEY, v); else sessionStorage.removeItem(COUPON_KEY); } catch (e) {} },
+};
+const couponBox = () => {
+  const c = coupon.get();
+  return c ? `<div class="coupon coupon--on" data-coupon><span class="coupon__tag">${ico('tag')}<span><b translate="no">${esc(c)}</b><span>Se valida y se aplica al confirmar el pedido</span></span></span>
+      <button class="textlink" type="button" data-coupon-off>Quitar</button></div>`
+    : `<form class="coupon" data-coupon novalidate><label class="coupon__label" for="coupon-in">¿Tienes un código de cupón?</label>
+      <div class="coupon__row"><input class="coupon__in" id="coupon-in" name="coupon" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" aria-describedby="coupon-hint">
+      <button class="vx-btn vx-btn--secondary" type="submit"><span class="vx-btn__label">Aplicar</span></button></div>
+      <p class="coupon__hint" id="coupon-hint" data-coupon-hint>El descuento se valida y se aplica al crear la compra.</p></form>`;
+};
+
 const sname = (id) => (storeOf(id) || {}).name || 'Tienda';
 const thumb = (l) => `<a class="row__thumb" href="#/p/${esc(l.id)}" aria-label="${esc(l.name)}">${l.img ? img(l.img, '') : ico('image')}</a>`;
 
@@ -27,11 +44,25 @@ export const carrito = {
           <div class="group__foot"><span>Subtotal de la tienda</span><b>${money(sub)}</b></div></section>`;
       }).join('')}
       <p class="note">${ico('info')}<span>El envío o retiro se elige por tienda en el siguiente paso. Cada tienda despacha por separado.</span></p>
+      ${couponBox()}
       <div class="total"><div class="total__line total__line--big"><span>Total productos</span><b>${money(cart.total())}</b></div></div>
       <div style="padding:0 var(--app-gutter)"><a class="vx-btn vx-btn--primary vx-btn--block vx-btn--lg" href="#/pago"><span class="vx-btn__label">Continuar a entrega y pago</span></a></div></div>`;
   },
   mount(el, _p, _q, ctx) {
+    el.addEventListener('submit', (e) => {
+      const f = e.target.closest('[data-coupon]'); if (!f) return;
+      e.preventDefault();
+      const inp = f.querySelector('input'), v = inp.value.trim().toUpperCase().replace(/\s+/g, '');
+      const hint = f.querySelector('[data-coupon-hint]');
+      if (!/^[A-Z0-9_-]{3,24}$/.test(v)) {
+        inp.setAttribute('aria-invalid', 'true'); hint.classList.add('coupon__hint--err');
+        hint.textContent = v ? 'Usa solo letras, números o guiones, de 3 a 24 caracteres.' : 'Escribe el código que te dio la tienda.';
+        inp.focus(); return;
+      }
+      coupon.set(v); toast('Cupón guardado: se valida al confirmar'); ctx.rerender();
+    });
     el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-coupon-off]')) { const old = coupon.get(); coupon.set(''); toast('Cupón quitado', { action: 'Deshacer', onAction: () => { coupon.set(old); ctx.rerender(); } }); ctx.rerender(); return; }
       const line = e.target.closest('[data-line]'), b = e.target.closest('[data-inc],[data-dec]'), rm = e.target.closest('[data-remove]');
       if (line && b) cart.set(line.dataset.line, cart.qty(line.dataset.line) + (b.hasAttribute('data-inc') ? 1 : -1));
       else if (rm) { const gone = cart.remove(rm.dataset.remove); toast('Quitado del carrito', { action: 'Deshacer', onAction: () => { cart.restore(gone); ctx.rerender(); } }); }
@@ -65,6 +96,7 @@ export const pago = {
       </fieldset>
       <p class="note" style="margin-top:16px">${ico('clock')}<span>Tu pedido queda reservado 8 horas mientras la tienda verifica el pago. Si no lo verifica en ese plazo, se libera la existencia y te avisamos.</span></p>
       <div class="total" style="margin-top:12px"><div class="total__line"><span>Productos</span><b>${money(cart.total())}</b></div><div class="total__line" data-ship><span>Envío</span><b>Gratis</b></div>
+        ${coupon.get() ? `<div class="total__line"><span>Cupón <b translate="no">${esc(coupon.get())}</b></span><span class="total__note">Se valida al confirmar</span></div>` : ''}
         <div class="total__line total__line--big"><span>Total</span><b>${money(cart.total())}</b></div></div>
       <p class="foot-note">Al confirmar aceptas los términos y la política de devoluciones de cada tienda.</p>
       <div class="actionbar"><div class="actionbar__sum"><span>Total</span><b>${money(cart.total())}</b></div>${btn('Confirmar pedido', 'vx-btn--primary', 'data-confirm')}</div>`;
@@ -84,7 +116,7 @@ export const pago = {
       this.dataset.state = 'sending';
       const delivery = Object.fromEntries([...el.querySelectorAll('input[name^="del-"]:checked')].map((i) => [i.name.slice(4), i.value]));
       const pay = (el.querySelector('input[name="pay"]:checked') || {}).value;
-      setTimeout(() => success(this, 'Listo', () => { const code = orders.place({ pay, delivery, city: prefs.city() }); nav.go('#/pedido/' + code, true); }), reduce ? 300 : 1400);
+      setTimeout(() => success(this, 'Listo', () => { const code = orders.place({ pay, delivery, city: prefs.city(), coupon: coupon.get() || undefined }); coupon.set(''); nav.go('#/pedido/' + code, true); }), reduce ? 300 : 1400);
     });
   },
 };
