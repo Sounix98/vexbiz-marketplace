@@ -5,6 +5,10 @@ Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `inde
 
 
 
+
+## 1.9.3 · 30/09/2026
+
+- Precio de la tarjeta de producto un 5 % más pequeño.
 ## 1.9.2 · 30/09/2026
 
 - Tarjeta de producto: el precio ya no va dentro de la píldora oscura. Queda como texto grande (del alto que tenía la píldora) y sigue abriendo la vista rápida al tocarlo. "Precio a consultar" queda en tamaño pequeño. Prueba: pruebas/v1.9.2-precio.png (antes y después, oscuro y claro).
