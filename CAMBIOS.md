@@ -8,6 +8,10 @@ Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `inde
 
 
 
+
+## 1.9.6 · 30/09/2026
+
+- Cuenta: los círculos de Pedidos, Favoritos, Direcciones y Soporte pasan a azul navy y el ícono toma el color del fondo de la pantalla (contraste 15,5:1). En tema oscuro el ícono va claro para que se siga leyendo. Prueba: pruebas/v1.9.6-cuenta.png.
 ## 1.9.5 · 30/09/2026
 
 - Precio de la tarjeta de producto otro 10 % más pequeño (de 20 px en teléfono a 31 px en pantalla ancha).
