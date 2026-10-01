@@ -9,6 +9,11 @@ Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `inde
 
 
 
+
+## 1.9.7 · 30/09/2026
+
+- Entrega y pago: se quitó "Efectivo al retirar"; "Transferencia en divisas" pasa a "Criptomonedas · USDT" (envías USDT a la billetera de la tienda y subes el comprobante); se retiró el aviso de las 8 horas de reserva, también en la pantalla de Pedido recibido. Prueba: pruebas/v1.9.7-pago.png.
+- Incluye todos los cambios gráficos hasta la 1.9.6 (precio sin píldora, accesos de Cuenta en navy, recorrido por nichos, ofertas relámpago, cupón).
 ## 1.9.6 · 30/09/2026
 
 - Cuenta: los círculos de Pedidos, Favoritos, Direcciones y Soporte pasan a azul navy y el ícono toma el color del fondo de la pantalla (contraste 15,5:1). En tema oscuro el ícono va claro para que se siga leyendo. Prueba: pruebas/v1.9.6-cuenta.png.

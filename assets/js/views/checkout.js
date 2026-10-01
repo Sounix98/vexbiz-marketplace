@@ -91,23 +91,18 @@ export const pago = {
       <p class="label" style="padding:20px var(--app-gutter) 8px">Cómo pagas</p>
       <fieldset class="group" style="border:1px solid var(--app-line);padding:0;margin-inline:var(--app-gutter)"><legend class="sr">Método de pago</legend>
         <label class="opt"><input type="radio" name="pay" value="pagomovil" checked><span class="opt__body"><span class="opt__title">Pago móvil</span><span class="opt__sub">En bolívares a la tasa BCV del día. Subes el comprobante y la tienda lo verifica.</span></span></label>
-        <label class="opt"><input type="radio" name="pay" value="divisas"><span class="opt__body"><span class="opt__title">Transferencia en divisas</span><span class="opt__sub">Cuenta en dólares de la tienda. Se verifica en 24 h hábiles.</span></span></label>
-        <label class="opt" data-cash><input type="radio" name="pay" value="efectivo"><span class="opt__body"><span class="opt__title">Efectivo al retirar</span><span class="opt__sub">Solo si retiras todo en la tienda.</span></span></label>
+        <label class="opt"><input type="radio" name="pay" value="usdt"><span class="opt__body"><span class="opt__title">Criptomonedas · USDT</span><span class="opt__sub">Envías USDT a la billetera de la tienda. Subes el comprobante de la transacción y la tienda lo verifica.</span></span></label>
       </fieldset>
-      <p class="note" style="margin-top:16px">${ico('clock')}<span>Tu pedido queda reservado 8 horas mientras la tienda verifica el pago. Si no lo verifica en ese plazo, se libera la existencia y te avisamos.</span></p>
-      <div class="total" style="margin-top:12px"><div class="total__line"><span>Productos</span><b>${money(cart.total())}</b></div><div class="total__line" data-ship><span>Envío</span><b>Gratis</b></div>
+      <div class="total" style="margin-top:16px"><div class="total__line"><span>Productos</span><b>${money(cart.total())}</b></div><div class="total__line" data-ship><span>Envío</span><b>Gratis</b></div>
         ${coupon.get() ? `<div class="total__line"><span>Cupón <b translate="no">${esc(coupon.get())}</b></span><span class="total__note">Se valida al confirmar</span></div>` : ''}
         <div class="total__line total__line--big"><span>Total</span><b>${money(cart.total())}</b></div></div>
       <p class="foot-note">Al confirmar aceptas los términos y la política de devoluciones de cada tienda.</p>
       <div class="actionbar"><div class="actionbar__sum"><span>Total</span><b>${money(cart.total())}</b></div>${btn('Confirmar pedido', 'vx-btn--primary', 'data-confirm')}</div>`;
   },
   mount(el) {
-    const cash = el.querySelector('[data-cash]');
-    if (!cash) return;
+    if (!el.querySelector('[data-confirm]')) return;            // carrito vacío
     const sync = () => {
-      const anyShip = !!el.querySelector('input[value="envio"]:checked'), ci = cash.querySelector('input');
-      ci.disabled = anyShip; cash.classList.toggle('opt--off', anyShip);
-      if (anyShip && ci.checked) el.querySelector('input[value="pagomovil"]').checked = true;
+      const anyShip = !!el.querySelector('input[value="envio"]:checked');
       el.querySelector('[data-ship] b').textContent = anyShip ? 'Por confirmar' : 'Gratis';
     };
     el.addEventListener('change', sync); sync();
@@ -126,12 +121,12 @@ export const pedido = {
   noBar: true,
   render(code) {
     return `<div class="done"><span class="done__ico">${ico('check-circle')}</span><h1 tabindex="-1" data-focus>Pedido recibido</h1><span class="done__code">#${esc(code)}</span>
-      <p>Queda reservado 8 horas mientras cada tienda verifica tu pago. Te avisamos cuando lo confirmen.</p></div>
+      <p>Cada tienda verifica tu pago. Te avisamos cuando lo confirmen.</p></div>
       <div class="stack">${link('Ver mis pedidos', '#/pedidos', 'vx-btn--primary vx-btn--block')}${link('Seguir comprando', '#/inicio', 'vx-btn--ghost vx-btn--block')}</div>`;
   },
 };
 
-const PAY = { pagomovil: 'Pago móvil', divisas: 'Transferencia en divisas', efectivo: 'Efectivo al retirar' };
+const PAY = { pagomovil: 'Pago móvil', usdt: 'Criptomonedas · USDT', divisas: 'Transferencia en divisas', efectivo: 'Efectivo al retirar' };   // los dos últimos solo para pedidos guardados antes de v1.9.7
 const localRows = (list) => `<div class="list">${list.map((o) => `<div class="row" style="align-items:flex-start"><span class="row__thumb row__thumb--ico">${ico('box')}</span>
       <span class="row__body"><span class="row__title">Pedido #${esc(o.code)}</span>
       <span class="row__sub">${plural(o.items, 'artículo', 'artículos')} · ${plural(o.stores, 'tienda', 'tiendas')} · ${shortDate(o.date)}${o.pay ? ' · ' + PAY[o.pay] : ''}</span>
