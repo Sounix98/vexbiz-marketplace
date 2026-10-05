@@ -1,6 +1,6 @@
 /* Inicio · Figma MARKETPLACE / PROTOTIPO / Home (292:800) + guía del Home 26/09.
    Orden: cabecera y ubicación → tabs de nicho → banners → banda Academia/Técnicos →
-   proveedores certificados → explora por interés → ofertas relámpago → recorrido por los 11
+   ofertas relámpago → proveedores certificados → explora por interés → recorrido por los 11
    nichos (se carga al bajar, con bloques de servicios intercalados cada 2 nichos) → marcas → confianza. */
 import { api } from '../api.js';
 import { CONFIG } from '../config.js';
@@ -139,10 +139,10 @@ export default {
       <nav class="nicherail" aria-label="Nichos de VEXBIZ">
         <div class="nicherail__track">${niches.slice().sort((a, b) => a.name.localeCompare(b.name, 'es')).map((n) => `<a class="nicon reveal" href="#/n/${esc(n.id)}"><span class="nicon__bubble"><img src="assets/img/nichos/${esc(n.id)}.webp" width="96" height="96" alt="" loading="lazy" decoding="async"></span><span class="nicon__name">${esc(n.name)}</span></a>`).join('')}</div>
       </nav>
-      <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas" data-seeall-stores>Ver todas${ico('chev-r')}</a></div><div class="rail" data-providers></div></section>
-      <section class="sec" aria-labelledby="t-exp"><div class="sec__head"><h2 class="sec__title" id="t-exp">Explora por interés</h2><a class="seeall" href="#/n/todo" data-seeall>Ver todo${ico('chev-r')}</a></div><div class="rail" data-products></div></section>
       ${dealsLive(home.deals) ? `<section class="sec deals" aria-labelledby="t-deals" data-deals><div class="sec__head"><h2 class="sec__title deals__title" id="t-deals">${ico('bolt')}Ofertas relámpago</h2><span class="deals__clock" data-countdown>${esc(countdown(home.deals.endsAt))}</span></div>
         <p class="sec__meta">Precios especiales por tiempo limitado, con el pago en custodia hasta que recibes.</p><div class="rail" data-deal-rail></div></section>` : ''}
+      <section class="sec" aria-labelledby="t-prov"><div class="sec__head"><h2 class="sec__title" id="t-prov">Proveedores certificados</h2><a class="seeall" href="#/tiendas" data-seeall-stores>Ver todas${ico('chev-r')}</a></div><div class="rail" data-providers></div></section>
+      <section class="sec" aria-labelledby="t-exp"><div class="sec__head"><h2 class="sec__title" id="t-exp">Explora por interés</h2><a class="seeall" href="#/n/todo" data-seeall>Ver todo${ico('chev-r')}</a></div><div class="rail" data-products></div></section>
       <div class="nfeed" data-feed aria-label="Recorrido por los nichos de VEXBIZ" role="feed" aria-busy="false"></div>
       <div class="nfeed__more" data-feed-more><button class="vx-btn vx-btn--ghost" type="button" data-feed-next><span class="vx-btn__label">Ver el siguiente nicho</span></button></div>
       ${home.brands && home.brands.length ? `<section class="sec" aria-labelledby="t-brands"><div class="sec__head"><h2 class="sec__title" id="t-brands">Marcas en VEXBIZ</h2></div>

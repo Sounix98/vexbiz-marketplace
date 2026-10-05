@@ -11,6 +11,10 @@ Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `inde
 
 
 
+
+## 1.9.9 · 05/10/2026
+
+- Inicio: nuevo orden después del carril de nichos: Ofertas relámpago primero, luego Proveedores certificados y luego Explora por interés. Desde ahí sigue igual (recorrido por los 11 nichos, marcas y confianza). Prueba: pruebas/v1.9.9-orden.png.
 ## 1.9.8 · 05/10/2026
 
 - Cuenta, tema oscuro: los círculos de Pedidos, Favoritos, Direcciones y Soporte pasan a #FFE396 y el ícono toma el color del fondo (contraste 13,3:1). El tema claro sigue en navy. Prueba: pruebas/v1.9.8-cuenta.png.
