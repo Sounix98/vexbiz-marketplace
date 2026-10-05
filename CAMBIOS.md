@@ -14,6 +14,10 @@ Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `inde
 
 
 
+
+## 1.9.12 · 05/10/2026
+
+- Tarjeta de proveedor: se quitó el marco interior (el borde fino dentro del borde). Prueba: pruebas/v1.9.12-proveedor.png (izquierda antes, derecha después).
 ## 1.9.11 · 05/10/2026
 
 - Inicio: se retiraron las pestañas de nicho (Todo, Refrigeración, Automotriz…) de la cabecera, debajo del buscador. Los nichos se siguen explorando desde el carril de íconos y el recorrido; Proveedores y Explora por interés muestran todo.
