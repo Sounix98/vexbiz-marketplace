@@ -15,6 +15,10 @@ Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `inde
 
 
 
+
+## 1.9.13 · 05/10/2026
+
+- Actualización automática: al publicar una versión nueva, el teléfono la instala y recarga solo la próxima vez que se abre la app. Antes esperaba un toque en un aviso que se iba enseguida y la app seguía en la versión vieja (por eso todavía se veían las pestañas de nicho quitadas en la 1.9.11).
 ## 1.9.12 · 05/10/2026
 
 - Tarjeta de proveedor: se quitó el marco interior (el borde fino dentro del borde). Prueba: pruebas/v1.9.12-proveedor.png (izquierda antes, derecha después).

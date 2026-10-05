@@ -734,14 +734,7 @@
       reg.addEventListener("updatefound", () => {
         const w = reg.installing;
         w && w.addEventListener("statechange", () => {
-          if (w.state === "installed" && navigator.serviceWorker.controller) {
-            const el = document.querySelector("[data-toast-out]");
-            toast("Hay una versión nueva de VEXBIZ. Toca aquí para actualizar.");
-            el.style.pointerEvents = "auto";
-            el.onclick = () => {
-              w.postMessage("skip-waiting");
-            };
-          }
+          if (w.state === "installed" && navigator.serviceWorker.controller) toast("Actualizando VEXBIZ a la versión nueva…");
         });
       });
     }).catch((e) => console.warn("[vexbiz] SW no registrado:", e.message));

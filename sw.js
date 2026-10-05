@@ -5,7 +5,7 @@
    - API en vivo (marketplace-api): primero red, caché si no hay conexión.
    - Cuenta (/auth, /account-api, cualquier pedido con Authorization): nunca pasa por la caché.
    Subir VERSION en cada entrega para que los teléfonos reciban la versión nueva. */
-const VERSION = 'vx-1.9.12';
+const VERSION = 'vx-1.9.13';
 const SHELL = `${VERSION}-shell`, DATA = `${VERSION}-data`, IMG = 'vx-img', API = 'vx-api';
 const PRECACHE = [
   './',
@@ -64,7 +64,8 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(SHELL).then((c) => c.addAll(PRECACHE)).then(() => caches.open(DATA)).then((c) => c.add('data/catalog.json')));
+  // v1.9.13: la versión nueva se activa sola (antes esperaba un toque en un aviso que desaparecía y el teléfono seguía en la vieja)
+  e.waitUntil(caches.open(SHELL).then((c) => c.addAll(PRECACHE)).then(() => caches.open(DATA)).then((c) => c.add('data/catalog.json')).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
