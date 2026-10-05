@@ -1025,3 +1025,7 @@ button.textlink { background: none; border: 0; padding: 0; font-family: inherit;
   :root:not([data-theme="light"]) .qa__ico { background: var(--app-qa-dark); border-color: var(--app-qa-dark); color: var(--app-bg); }
   :root:not([data-theme="light"]) .qa__n { background: var(--vx-n-0); color: var(--vx-n-900); box-shadow: 0 0 0 2px var(--app-bg); }
 }
+
+/* ---------- 26 · v1.9.10: ficha, aire entre el precio y su nota ---------- */
+.pd__price { line-height: 1; }
+.pd__price small { margin-top: var(--vx-sp-2); line-height: 1.4; letter-spacing: 0; }

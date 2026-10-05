@@ -12,6 +12,10 @@ Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `inde
 
 
 
+
+## 1.9.10 · 05/10/2026
+
+- Ficha de producto: más aire entre el precio y la nota "Precio en dólares (USD), con IVA…" (8 px) y la nota con interlineado más cómodo. Prueba: pruebas/v1.9.10-precio-ficha.png (arriba antes, abajo después).
 ## 1.9.9 · 05/10/2026
 
 - Inicio: nuevo orden después del carril de nichos: Ofertas relámpago primero, luego Proveedores certificados y luego Explora por interés. Desde ahí sigue igual (recorrido por los 11 nichos, marcas y confianza). Prueba: pruebas/v1.9.9-orden.png.
