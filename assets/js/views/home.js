@@ -1,5 +1,5 @@
 /* Inicio · Figma MARKETPLACE / PROTOTIPO / Home (292:800) + guía del Home 26/09.
-   Orden: cabecera y ubicación → tabs de nicho → banners → banda Academia/Técnicos →
+   Orden: cabecera y ubicación → banners → banda Academia/Técnicos →
    ofertas relámpago → proveedores certificados → explora por interés → recorrido por los 11
    nichos (se carga al bajar, con bloques de servicios intercalados cada 2 nichos) → marcas → confianza. */
 import { api } from '../api.js';
@@ -9,7 +9,7 @@ import { ico, img, pcard, provCard, empty, btn, reveal, reduce, storeOf, storeNi
 import { prefs } from '../store.js';
 import { auth } from '../auth.js';
 
-let selected = 'todo';
+const selected = 'todo';   // v1.9.11: sin pestañas de nicho en la cabecera; los nichos se exploran en el carril de íconos y el recorrido
 const TRUST_ICON = { truck: 'truck', returns: 'swap', shield: 'shield', headset: 'help' };
 
 export function nicheEmpty(n) {
@@ -99,7 +99,6 @@ export default {
   async render() {
     const [niches, home, stores] = await Promise.all([api.niches(), api.home(), api.stores()]);
     const map = new Map(niches.map((n) => [n.id, n]));
-    const tabs = ['todo', ...CONFIG.homeNiches.filter((id) => map.has(id))];
     const trust = (home.trust || []).slice(0, 4);
     // Fotos reales del catálogo para los banners editoriales (una por banner)
     const pickIds = ['ref', 'fer', 'aut'].map((k) => (home.bestSellers[k] || [])[0]).filter(Boolean);
@@ -120,9 +119,6 @@ export default {
       <header class="hero">
         ${auth.signedIn() ? `<p class="hero__hello">Hola, <b>${esc(auth.firstName())}</b></p>` : ''}<h1 class="sr" tabindex="-1" data-focus>Inicio</h1>
         <button class="loc" type="button" data-open="loc" aria-haspopup="dialog">${ico('pin', 'ico--sm')}<span>Enviar a <b data-city>${esc(prefs.city())}</b></span>${ico('chev-d', 'ico--xs')}</button>
-        <div class="niches" role="tablist" aria-label="Nichos" data-niches>
-          ${tabs.map((id) => `<button class="niche" role="tab" type="button" data-niche="${id}" aria-selected="${selected === id}" tabindex="${selected === id ? 0 : -1}">${id === 'todo' ? 'Todo' : esc(map.get(id).name)}</button>`).join('')}
-        </div>
         <section class="banners" aria-roledescription="carrusel" aria-label="Promociones">
           <div class="banners__track" data-banners tabindex="0" aria-label="Promociones, desliza para ver más">
             ${banner('a', 'href="#/categorias"', ' banner--b1', 'Marketplace', ['Todo para tu negocio', 'en un solo lugar'], 'Repuestos, equipos y suministros de tiendas verificadas.', 'Explorar categorías', art(0, 'grid'))}
@@ -209,21 +205,6 @@ export default {
       io.observe(more);
     }
 
-    const tabs = el.querySelector('[data-niches]');
-    tabs.addEventListener('click', (e) => {
-      const b = e.target.closest('[data-niche]'); if (!b) return;
-      selected = b.dataset.niche;
-      tabs.querySelectorAll('[data-niche]').forEach((x) => { const on = x === b; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; });
-      b.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
-      rails();
-    });
-    tabs.addEventListener('keydown', (e) => {
-      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-      const all = [...tabs.querySelectorAll('[data-niche]')], i = all.indexOf(document.activeElement);
-      if (i < 0) return; e.preventDefault();
-      const nx = all[(i + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length]; nx.focus(); nx.click();
-    });
-    const sel = tabs.querySelector('[aria-selected="true"]'); if (sel) sel.scrollIntoView({ inline: 'nearest', block: 'nearest' });
 
     // Carrusel (guía del Home, tutorial A3): cambia cada 4000 ms con un deslizamiento de 500 ms
     // ease-in-out, los puntos cambian de ancho a la vez y el bucle no rebobina: al final hay una

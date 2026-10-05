@@ -1122,7 +1122,6 @@
     async render() {
       const [niches, home, stores2] = await Promise.all([api.niches(), api.home(), api.stores()]);
       const map = new Map(niches.map((n) => [n.id, n]));
-      const tabs = ["todo", ...CONFIG.homeNiches.filter((id) => map.has(id))];
       const trust = (home.trust || []).slice(0, 4);
       const pickIds = ["ref", "fer", "aut"].map((k) => (home.bestSellers[k] || [])[0]).filter(Boolean);
       const feats = pickIds.length ? await api.byIds(pickIds) : [];
@@ -1140,9 +1139,6 @@
       <header class="hero">
         ${auth.signedIn() ? `<p class="hero__hello">Hola, <b>${esc(auth.firstName())}</b></p>` : ""}<h1 class="sr" tabindex="-1" data-focus>Inicio</h1>
         <button class="loc" type="button" data-open="loc" aria-haspopup="dialog">${ico("pin", "ico--sm")}<span>Enviar a <b data-city>${esc(prefs.city())}</b></span>${ico("chev-d", "ico--xs")}</button>
-        <div class="niches" role="tablist" aria-label="Nichos" data-niches>
-          ${tabs.map((id) => `<button class="niche" role="tab" type="button" data-niche="${id}" aria-selected="${selected === id}" tabindex="${selected === id ? 0 : -1}">${id === "todo" ? "Todo" : esc(map.get(id).name)}</button>`).join("")}
-        </div>
         <section class="banners" aria-roledescription="carrusel" aria-label="Promociones">
           <div class="banners__track" data-banners tabindex="0" aria-label="Promociones, desliza para ver más">
             ${banner("a", 'href="#/categorias"', " banner--b1", "Marketplace", ["Todo para tu negocio", "en un solo lugar"], "Repuestos, equipos y suministros de tiendas verificadas.", "Explorar categorías", art(0, "grid"))}
@@ -1232,30 +1228,6 @@
         }, { root: el.closest(".screen"), rootMargin: "0px 0px 600px 0px" });
         io2.observe(more);
       }
-      const tabs = el.querySelector("[data-niches]");
-      tabs.addEventListener("click", (e) => {
-        const b = e.target.closest("[data-niche]");
-        if (!b) return;
-        selected = b.dataset.niche;
-        tabs.querySelectorAll("[data-niche]").forEach((x) => {
-          const on = x === b;
-          x.setAttribute("aria-selected", on);
-          x.tabIndex = on ? 0 : -1;
-        });
-        b.scrollIntoView({ inline: "nearest", block: "nearest", behavior: reduce ? "auto" : "smooth" });
-        rails();
-      });
-      tabs.addEventListener("keydown", (e) => {
-        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-        const all = [...tabs.querySelectorAll("[data-niche]")], i = all.indexOf(document.activeElement);
-        if (i < 0) return;
-        e.preventDefault();
-        const nx = all[(i + (e.key === "ArrowRight" ? 1 : all.length - 1)) % all.length];
-        nx.focus();
-        nx.click();
-      });
-      const sel = tabs.querySelector('[aria-selected="true"]');
-      if (sel) sel.scrollIntoView({ inline: "nearest", block: "nearest" });
       const track = el.querySelector("[data-banners]"), dots = [...el.querySelectorAll("[data-dots] .dot")], N = dots.length;
       const clone = track.children[0].cloneNode(true);
       clone.setAttribute("aria-hidden", "true");

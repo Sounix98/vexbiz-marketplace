@@ -1029,3 +1029,7 @@ button.textlink { background: none; border: 0; padding: 0; font-family: inherit;
 /* ---------- 26 · v1.9.10: ficha, aire entre el precio y su nota ---------- */
 .pd__price { line-height: 1; }
 .pd__price small { margin-top: var(--vx-sp-2); line-height: 1.4; letter-spacing: 0; }
+
+/* ---------- 27 · v1.9.11: píldora Academia más pegada al carrusel y al carril de nichos ---------- */
+.home > .hero { margin-bottom: calc(var(--vx-sp-5) * -1); }        /* 40 - 24 = 16 px hasta la píldora */
+.home > .band-ticker { margin-bottom: calc(var(--vx-sp-5) * -1); } /* 16 px hasta el carril de nichos */

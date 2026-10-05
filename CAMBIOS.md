@@ -13,6 +13,11 @@ Cada entrega se escribe en esta carpeta. Para ver un cambio: doble clic en `inde
 
 
 
+
+## 1.9.11 · 05/10/2026
+
+- Inicio: se retiraron las pestañas de nicho (Todo, Refrigeración, Automotriz…) de la cabecera, debajo del buscador. Los nichos se siguen explorando desde el carril de íconos y el recorrido; Proveedores y Explora por interés muestran todo.
+- La píldora Academia VEXBIZ queda a 16 px del carrusel y del carril de nichos (antes 32 px). Prueba: pruebas/v1.9.11-cabecera.png (izquierda antes, derecha después).
 ## 1.9.10 · 05/10/2026
 
 - Ficha de producto: más aire entre el precio y la nota "Precio en dólares (USD), con IVA…" (8 px) y la nota con interlineado más cómodo. Prueba: pruebas/v1.9.10-precio-ficha.png (arriba antes, abajo después).
