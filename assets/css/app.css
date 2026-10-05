@@ -1017,6 +1017,11 @@ button.textlink { background: none; border: 0; padding: 0; font-family: inherit;
 /* ---------- 25 · v1.9.6: accesos rápidos de Cuenta en azul navy, ícono del color del fondo ---------- */
 .qa__ico { background: var(--vx-indigo-900); border-color: var(--vx-indigo-900); color: var(--app-bg); }
 .qa__n { background: var(--vx-n-0); color: var(--vx-n-900); box-shadow: 0 0 0 2px var(--vx-indigo-900); }
-/* tema oscuro: el fondo es casi negro, un ícono de ese color no se leería sobre navy; va claro para mantener el contraste */
-[data-theme="dark"] .qa__ico { border-color: var(--vx-indigo-700); color: var(--vx-n-100); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .qa__ico { border-color: var(--vx-indigo-700); color: var(--vx-n-100); } }
+/* tema oscuro (v1.9.8): círculo ámbar claro #FFE396 y el ícono del color del fondo */
+:root { --app-qa-dark: #FFE396; }   /* pedido 05/10: tono exacto indicado */
+[data-theme="dark"] .qa__ico { background: var(--app-qa-dark); border-color: var(--app-qa-dark); color: var(--app-bg); }
+[data-theme="dark"] .qa__n { background: var(--vx-n-0); color: var(--vx-n-900); box-shadow: 0 0 0 2px var(--app-bg); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .qa__ico { background: var(--app-qa-dark); border-color: var(--app-qa-dark); color: var(--app-bg); }
+  :root:not([data-theme="light"]) .qa__n { background: var(--vx-n-0); color: var(--vx-n-900); box-shadow: 0 0 0 2px var(--app-bg); }
+}
